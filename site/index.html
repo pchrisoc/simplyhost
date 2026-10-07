@@ -2,100 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>SimplyHost</title>
 
-  <meta
-    name="description"
-    content="SimplyHost makes self-hosting simple, accessible, and understandable."
-  >
-
-  <link
-    rel="icon"
-    type="image/png"
-    href="/simplyhost.png"
-  >
-
-  <link
-    rel="stylesheet"
-    href="/style.css"
-  >
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
   <header>
-
-    <a
-      href="/"
-      class="logo"
-      aria-label="SimplyHost home"
-    >
-      <img
-        src="/simplyhost.png"
-        alt="SimplyHost"
-        width="52"
-        height="52"
-      >
+    <a href="/" class="logo" aria-label="SimplyHost home">
+      <img src="/simplyhost.png" alt="SimplyHost">
     </a>
 
-    <div class="header-links">
-
-      <a href="https://docs.simplyhost.org">
+    <nav class="header-links">
+      <a href="/docs/">
         Docs
-        <span
-          class="external-arrow"
-          aria-hidden="true"
-        >&#8599;&#xfe0e;</span>
+        <span class="external-arrow">↗</span>
       </a>
 
       <a href="https://github.com/pchrisoc/simplyhost">
         GitHub
-        <span
-          class="external-arrow"
-          aria-hidden="true"
-        >&#8599;&#xfe0e;</span>
+        <span class="external-arrow">↗</span>
       </a>
-
-    </div>
-
+    </nav>
   </header>
 
   <main>
-
     <h1>SimplyHost</h1>
 
     <p class="tagline">
       Self-hosting should be approachable.
     </p>
 
-    <p class="description">
-      SimplyHost is an open-source project focused on making self-hosting
-      easier to understand, plan, and deploy. It is designed to help anyone
-      build and manage their own home server without requiring years of
-      systems administration experience.
-    </p>
+    <div class="description">
+      <p>
+        SimplyHost is an open-source project focused on making self-hosting
+        easier to understand, plan, and deploy. It is designed to help anyone
+        build and manage their own home server without requiring years of
+        systems administration experience.
+      </p>
 
-    <p class="description">
-      Choose what you want to host, understand what resources it needs,
-      and get clear guidance for building a system that works.
-    </p>
-
-    <footer>
-      <a href="mailto:pchrisoc@simplyhost.org">
-        <svg class="mail-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v.4l9 6 9-6V7l-9 6-9-6Z"/>
-        </svg>
-
-        pchrisoc@simplyhost.org
-      </a>
-    </footer>
-
+      <p>
+        Choose what you want to host, understand what resources it needs,
+        and get clear guidance for building a system that works.
+      </p>
+    </div>
   </main>
+
+  <footer>
+    <a href="mailto:pchrisoc@simplyhost.org">
+      <svg
+        class="mail-icon"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          d="M1.60175 4.20114C2.14997 3.47258 3.02158 3 4 3H20C20.9784 3 21.85 3.47258 22.3982 4.20113L12 11.7635L1.60175 4.20114Z"
+        />
+        <path
+          d="M1 6.2365V18C1 19.6523 2.34772 21 4 21H20C21.6523 21 23 19.6523 23 18V6.23649L13.1763 13.381C12.475 13.891 11.525 13.891 10.8237 13.381L1 6.2365Z"
+        />
+      </svg>
+
+      <span>pchrisoc@simplyhost.org</span>
+    </a>
+  </footer>
+
 </body>
 </html>

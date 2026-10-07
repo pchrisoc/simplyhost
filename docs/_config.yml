@@ -1,0 +1,22 @@
+title: SimplyHost Docs
+description: Documentation for SimplyHost
+
+url: "https://docs.simplyhost.org"
+baseurl: ""
+
+theme: just-the-docs
+
+search_enabled: true
+nav_enabled: true
+
+aux_links:
+  "SimplyHost on GitHub":
+    - "https://github.com/pchrisoc/simplyhost"
+
+aux_links_new_tab: true
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

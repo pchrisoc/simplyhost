@@ -1,0 +1,37 @@
+{"0": {
+    "doc": "Getting Started",
+    "title": "Getting Started",
+    "content": "This guide walks through setting up SimplyHost. ",
+    "url": "/getting-started.html",
+    
+    "relUrl": "/getting-started.html"
+  },"1": {
+    "doc": "Getting Started",
+    "title": "Requirements",
+    "content": ". | A Linux server | Docker | Docker Compose | Network access | . ",
+    "url": "/getting-started.html#requirements",
+    
+    "relUrl": "/getting-started.html#requirements"
+  },"2": {
+    "doc": "Getting Started",
+    "title": "Installation",
+    "content": "Installation instructions will go here. ",
+    "url": "/getting-started.html#installation",
+    
+    "relUrl": "/getting-started.html#installation"
+  },"3": {
+    "doc": "Home",
+    "title": "SimplyHost Documentation",
+    "content": "SimplyHost makes self-hosting simple and accessible. This documentation covers installation, configuration, networking, storage, and managing applications with SimplyHost. ",
+    "url": "/#simplyhost-documentation",
+    
+    "relUrl": "/#simplyhost-documentation"
+  },"4": {
+    "doc": "Home",
+    "title": "Home",
+    "content": " ",
+    "url": "/",
+    
+    "relUrl": "/"
+  }
+}

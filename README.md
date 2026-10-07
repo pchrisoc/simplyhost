@@ -1,12 +1,12 @@
-# ProxPlan
+# SimplyHost
 
 **Build your own Proxmox home server from a guided hardware setup and an application checklist.**
 
-ProxPlan is a planned open-source web configurator and local deployment tool. Users enter their hardware, choose virtual machines and operating systems, select self-hosted applications, and receive a complete deployment plan with networking, storage, remote access, backups, and documentation.
+SimplyHost is a planned open-source web configurator and local deployment tool. Users enter their hardware, choose virtual machines and operating systems, select self-hosted applications, and receive a complete deployment plan with networking, storage, remote access, backups, and documentation.
 
 Optional **Budget Mode** shows how every selection affects available RAM, CPU capacity, and storage. A modular catalog tracks official upstream releases so new installations and existing deployments can stay current.
 
-> **Status:** Planning and development roadmap. Features below are intended goals, not claims of existing functionality. **ProxPlan** is the working name.
+> **Status:** Planning and development roadmap. Features below are intended goals, not claims of existing functionality.
 
 ## Project goals
 

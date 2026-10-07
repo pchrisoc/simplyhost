@@ -6,7 +6,7 @@
 
   <title>SimplyHost</title>
 
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=9">
 </head>
 
 <body>
@@ -17,19 +17,28 @@
     </a>
 
     <nav class="header-links">
-      <a href="/docs/">
+      <a
+        href="https://docs.simplyhost.org"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Docs
-        <span class="external-arrow">↗</span>
+        <span class="external-arrow">&#8599;&#65038;</span>
       </a>
 
-      <a href="https://github.com/pchrisoc/simplyhost">
+      <a
+        href="https://github.com/pchrisoc/simplyhost"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         GitHub
-        <span class="external-arrow">↗</span>
+        <span class="external-arrow">&#8599;&#65038;</span>
       </a>
     </nav>
   </header>
 
   <main>
+
     <h1>SimplyHost</h1>
 
     <p class="tagline">
@@ -37,6 +46,7 @@
     </p>
 
     <div class="description">
+
       <p>
         SimplyHost is an open-source project focused on making self-hosting
         easier to understand, plan, and deploy. It is designed to help anyone
@@ -47,31 +57,41 @@
       <p>
         Choose what you want to host, understand what resources it needs,
         and get clear guidance for building a system that works.
+
+        <br>
+        <br>
+        <br>
+
+        <button
+          class="email-contact"
+          type="button"
+          onclick="window.location.href='mailto:pchrisoc@simplyhost.org'"
+          aria-label="Email pchrisoc@simplyhost.org"
+        >
+          <svg
+            class="mail-icon"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M1.60175 4.20114C2.14997 3.47258 3.02158 3 4 3H20C20.9784 3 21.85 3.47258 22.3982 4.20113L12 11.7635L1.60175 4.20114Z"
+            />
+            <path
+              d="M1 6.2365V18C1 19.6523 2.34772 21 4 21H20C21.6523 21 23 19.6523 23 18V6.23649L13.1763 13.381C12.475 13.891 11.525 13.891 10.8237 13.381L1 6.2365Z"
+            />
+          </svg>
+
+          <span>pchrisoc@simplyhost.org</span>
+        </button>
       </p>
+
     </div>
+
   </main>
-
-  <footer>
-    <a href="mailto:pchrisoc@simplyhost.org">
-      <svg
-        class="mail-icon"
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M1.60175 4.20114C2.14997 3.47258 3.02158 3 4 3H20C20.9784 3 21.85 3.47258 22.3982 4.20113L12 11.7635L1.60175 4.20114Z"
-        />
-        <path
-          d="M1 6.2365V18C1 19.6523 2.34772 21 4 21H20C21.6523 21 23 19.6523 23 18V6.23649L13.1763 13.381C12.475 13.891 11.525 13.891 10.8237 13.381L1 6.2365Z"
-        />
-      </svg>
-
-      <span>pchrisoc@simplyhost.org</span>
-    </a>
-  </footer>
 
 </body>
 </html>

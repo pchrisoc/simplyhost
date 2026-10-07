@@ -13,16 +13,21 @@ body {
   min-height: 100vh;
 
   font-family: Georgia, "Times New Roman", serif;
+
   color: #1f1a16;
   background: #faf9f6;
 
   line-height: 1.6;
 }
 
-/* Very subtle paper texture */
+
+/* --------------------------------------------------
+   Very subtle paper texture
+-------------------------------------------------- */
 
 body::before {
   content: "";
+
   position: fixed;
   inset: 0;
 
@@ -42,7 +47,10 @@ body::before {
     );
 }
 
-/* Header */
+
+/* --------------------------------------------------
+   Header
+-------------------------------------------------- */
 
 header {
   display: flex;
@@ -53,12 +61,14 @@ header {
   padding: 1.5rem 2rem;
 }
 
+
 .logo {
   display: inline-flex;
   align-items: center;
 
   text-decoration: none;
 }
+
 
 .logo img {
   display: block;
@@ -69,6 +79,7 @@ header {
   object-fit: contain;
 }
 
+
 .header-links {
   margin-left: auto;
 
@@ -78,32 +89,60 @@ header {
   gap: 1.5rem;
 }
 
-.header-links a {
+
+.header-links a,
+.header-links a:link,
+.header-links a:visited,
+.header-links a:active,
+.header-links a:focus {
   display: inline-flex;
   align-items: baseline;
 
   gap: 0.22rem;
 
-  color: #1f1a16;
-  text-decoration: none;
-
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
+
+  color: #1f1a16 !important;
+  -webkit-text-fill-color: #1f1a16 !important;
+
+  text-decoration: none !important;
 }
 
+
 .header-links a:hover {
-  text-decoration: underline;
+  color: #1f1a16 !important;
+  -webkit-text-fill-color: #1f1a16 !important;
+
+  text-decoration: underline !important;
+
+  text-decoration-thickness: 1px !important;
   text-underline-offset: 4px;
 }
 
+
 .external-arrow {
+  display: inline-block;
+
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.82em;
+
   font-style: normal;
+  font-size: 0.82em;
+  font-weight: inherit;
+
+  line-height: 1;
+
+  color: #1f1a16 !important;
+  -webkit-text-fill-color: #1f1a16 !important;
+
+  font-variant-emoji: text;
 }
 
-/* Main */
+
+/* --------------------------------------------------
+   Main
+-------------------------------------------------- */
 
 main {
   width: 100%;
@@ -111,8 +150,9 @@ main {
 
   margin: 9vh auto 0;
 
-  padding: 0 2rem 5rem;
+  padding: 0 2rem 4rem;
 }
+
 
 h1 {
   margin: 0 0 1.5rem;
@@ -124,14 +164,17 @@ h1 {
   letter-spacing: -0.04em;
 }
 
+
 .tagline {
   max-width: 620px;
 
   margin: 0 0 2rem;
 
   font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+
   line-height: 1.45;
 }
+
 
 .description {
   max-width: 620px;
@@ -142,51 +185,73 @@ h1 {
   color: #3f372f;
 }
 
+
 .description p {
   margin-top: 0;
   margin-bottom: 1.2rem;
 }
 
-/* Footer */
 
-footer {
-  position: fixed;
+/* --------------------------------------------------
+   Email
+-------------------------------------------------- */
 
-  left: 50%;
-  bottom: 14px;
+/*
+   This is NOT a hyperlink.
 
-  transform: translateX(-50%);
+   It's a completely reset button, so the browser
+   cannot turn it blue, purple, or underline it.
+*/
 
-  width: 100%;
-  max-width: 760px;
+.email-contact {
+  all: unset;
 
-  padding: 0 2rem;
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
 
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.85rem;
+  font-weight: 400;
 
-  color: #555;
+  line-height: 1;
+
+  color: #3f372f !important;
+  -webkit-text-fill-color: #3f372f !important;
+
+  cursor: pointer;
+
+  opacity: 0.72;
 }
 
-footer a,
-footer a:link,
-footer a:visited,
-footer a:hover,
-footer a:active,
-footer a:focus {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 
-  color: #555 !important;
+.email-contact span {
+  color: #3f372f !important;
+  -webkit-text-fill-color: #3f372f !important;
+
   text-decoration: none !important;
-  border-bottom: none !important;
 }
 
-/* Envelope icon */
 
-footer svg.mail-icon {
-  display: inline-block !important;
+.email-contact:hover {
+  color: #3f372f !important;
+  -webkit-text-fill-color: #3f372f !important;
+
+  opacity: 0.85;
+}
+
+
+.email-contact:focus-visible {
+  outline: 1px solid #3f372f;
+  outline-offset: 3px;
+}
+
+
+/* Envelope — exactly 12px */
+
+.mail-icon {
+  display: inline-block;
 
   width: 12px !important;
   height: 12px !important;
@@ -197,19 +262,27 @@ footer svg.mail-icon {
   max-width: 12px !important;
   max-height: 12px !important;
 
-  flex: 0 0 12px !important;
+  flex: 0 0 12px;
 
-  fill: currentColor;
+  color: #3f372f !important;
+  fill: #3f372f !important;
 
-  margin: 0 !important;
-  padding: 0 !important;
-
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Mobile */
+
+.mail-icon path {
+  fill: #3f372f !important;
+}
+
+
+/* --------------------------------------------------
+   Mobile
+-------------------------------------------------- */
 
 @media (max-width: 600px) {
+
   header {
     padding: 1.25rem;
   }
@@ -232,11 +305,6 @@ footer svg.mail-icon {
 
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    padding-bottom: 5rem;
-  }
-
-  footer {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
+    padding-bottom: 3rem;
   }
 }

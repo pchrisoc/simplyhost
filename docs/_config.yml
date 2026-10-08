@@ -20,3 +20,17 @@ defaults:
       path: ""
     values:
       layout: default
+
+exclude:
+  - Dockerfile
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+
+sass:
+  quiet_deps: true
+  silence_deprecations:
+    - import
+    - global-builtin
+    - color-functions

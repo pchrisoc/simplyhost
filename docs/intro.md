@@ -1,6 +1,6 @@
 ---
 title: Intro
-nav_order: 2
+nav_order: 3
 ---
 
 # Intro
@@ -31,5 +31,5 @@ nav_order: 2
 - While there are numerous reasons to self-host, I have found the challenge of learning something new, the retention of my personal data, and the convenience that managing your own software provides as the core reasons I have continued my journey.
 - Most of everything on this site is [open-source](https://en.wikipedia.org/wiki/Open_source) with some exceptions (e.g. [Tailscale](https://tailscale.com/)). There is usually an open-source implementation for every closed-source one (e.g. Firefox vs. Chrome), And I like to argue that the open-source option is usually better.
 - A vast amount of containers (conceptualize this as your various "apps") can run sufficiently on hardware you already have (e.g. old laptop, old desktop, mobile devices).
-- Self-hosting *can* save you money (especially on stupid subscriptions), but with the [increasing computer parts](https://pcpartpicker.com/trends/) and many ways to add to your self-hosting journey that cost money (e.g. VPS and domain subscriptions) it can get to a point where it is a hobby, and hobbies have budgets.
+- Self-hosting *can* save you money (especially on stupid subscriptions), but with the [increasing prices for computer parts](https://pcpartpicker.com/trends/) and many ways to add to your self-hosting journey that cost money (e.g. VPS and domain subscriptions) it can get to a point where it is a hobby, and hobbies have budgets.
 

@@ -64,9 +64,23 @@
   },"9": {
     "doc": "Intro",
     "title": "Why should you self-host?",
-    "content": ". | While there are numerous reasons to self-host, I have found the challenge of learning something new, the retention of my personal data, and the convenience that managing your own software provides as the core reasons I have continued my journey. | Most of everything on this site is open-source with some exceptions (e.g. Tailscale). There is usually an open-source implementation for every closed-source one (e.g. Firefox vs. Chrome), And I like to argue that the open-source option is usually better. | A vast amount of containers (conceptualize this as your various “apps”) can run sufficiently on hardware you already have (e.g. old laptop, old desktop, mobile devices). | Self-hosting can save you money (especially on stupid subscriptions), but with the increasing computer parts and many ways to add to your self-hosting journey that cost money (e.g. VPS and domain subscriptions) it can get to a point where it is a hobby, and hobbies have budgets. | . ",
+    "content": ". | While there are numerous reasons to self-host, I have found the challenge of learning something new, the retention of my personal data, and the convenience that managing your own software provides as the core reasons I have continued my journey. | Most of everything on this site is open-source with some exceptions (e.g. Tailscale). There is usually an open-source implementation for every closed-source one (e.g. Firefox vs. Chrome), And I like to argue that the open-source option is usually better. | A vast amount of containers (conceptualize this as your various “apps”) can run sufficiently on hardware you already have (e.g. old laptop, old desktop, mobile devices). | Self-hosting can save you money (especially on stupid subscriptions), but with the increasing prices for computer parts and many ways to add to your self-hosting journey that cost money (e.g. VPS and domain subscriptions) it can get to a point where it is a hobby, and hobbies have budgets. | . ",
     "url": "/intro.html#why-should-you-self-host",
     
     "relUrl": "/intro.html#why-should-you-self-host"
+  },"10": {
+    "doc": "Resources",
+    "title": "Resources",
+    "content": " ",
+    "url": "/resources.html",
+    
+    "relUrl": "/resources.html"
+  },"11": {
+    "doc": "Resources",
+    "title": "List of Great Resources",
+    "content": ". | Awesome Self-Hosted: Great repo with tons of self-hosted projects filter by category | Community Scripts: Scripts written around making ProxMox VE easier and faster | Yet Another Media Server (YAMS): Well documented installation script for all things media | . ",
+    "url": "/resources.html#list-of-great-resources",
+    
+    "relUrl": "/resources.html#list-of-great-resources"
   }
 }

@@ -77,10 +77,17 @@
     "relUrl": "/resources.html"
   },"11": {
     "doc": "Resources",
-    "title": "List of Great Resources",
-    "content": ". | Awesome Self-Hosted: Great repo with tons of self-hosted projects filter by category | Community Scripts: Scripts written around making ProxMox VE easier and faster | Yet Another Media Server (YAMS): Well documented installation script for all things media | . ",
-    "url": "/resources.html#list-of-great-resources",
+    "title": "1. Links to Services I Host",
+    "content": ". | Proxmox VE | Proxmox Backup Server | Docker | Portainer | YAMS – Yet Another Media Server | Jellyfin | Sonarr | Radarr | Lidarr | Prowlarr | Audiobookshelf | BookBridge | Storyteller | Nextcloud | Nextcloud All-in-One | Vaultwarden | BookStack | Wiki.js | GeoPulse | SparkyFitness | Home Assistant | n8n | Grafana | Prometheus | Pulse | Pangolin | Newt | Tailscale | Cloudflare | Nginx | PostgreSQL | Redis | OpenZFS | SimplyHost | SimplyHost Documentation | SimplyHost GitHub | . ",
+    "url": "/resources.html#1-links-to-services-i-host",
     
-    "relUrl": "/resources.html#list-of-great-resources"
+    "relUrl": "/resources.html#1-links-to-services-i-host"
+  },"12": {
+    "doc": "Resources",
+    "title": "2. Other Websites — Resources, Helpers, and Fun Stuff",
+    "content": ". | Proxmox Community Scripts | Proxmox Forum | Proxmox Documentation | Proxmox Backup Server Documentation | Awesome Selfhosted | Awesome Selfhosted GitHub | selfh.st | selfh.st/apps | Self-Hosted Podcast | r/selfhosted | r/homelab | ServeTheHome | LinuxServer.io | LinuxServer.io Docker Images | Docker Hub | GitHub | GitHub Container Registry | Docker Compose Documentation | OpenZFS Documentation | Debian Documentation | ArchWiki | DigitalOcean Community Tutorials | Hetzner Community Tutorials | Cloudflare Documentation | Tailscale Documentation | Pangolin Documentation | Traefik Documentation | Nginx Documentation | TurnKey Linux | YunoHost | YunoHost App Catalog | Runtipi | Umbrel | CasaOS | Cosmos Cloud | Ansible Documentation | OpenTofu | Terraform | AlternativeTo | Privacy Guides | PrivacyTools.io | It’s FOSS | DistroWatch | Explainshell | Crontab Guru | DNS Checker | MXToolbox | SSL Labs Server Test | Qualys SSL Labs | Can I Use | Regex101 | CyberChef | JSONLint | Mermaid Live Editor | Excalidraw | Diagrams.net | tldraw | ASCIIFlow | Roadmap.sh | Linux Journey | The 512KB Club | The 1MB Club | . ",
+    "url": "/resources.html#2-other-websites--resources-helpers-and-fun-stuff",
+    
+    "relUrl": "/resources.html#2-other-websites--resources-helpers-and-fun-stuff"
   }
 }

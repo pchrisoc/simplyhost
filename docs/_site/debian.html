@@ -14,9 +14,10 @@
   <style id="jtd-nav-activation">
   
 
+    .site-nav > ul.nav-list:first-child > li > a,
     
-    .site-nav > ul.nav-list:first-child > li:not(:nth-child(2)) > a,
-    .site-nav > ul.nav-list:first-child > li > ul > li a {
+    .site-nav > ul.nav-list:first-child > li > ul > li:not(:nth-child(2)) > a,
+    .site-nav > ul.nav-list:first-child > li > ul > li > ul > li a {
       background-image: none;
     }
 
@@ -25,12 +26,14 @@
       background-image: none;
     }
 
-    .site-nav > ul.nav-list:first-child > li:nth-child(2) > a {
+    .site-nav > ul.nav-list:first-child > li:nth-child(2) > ul > li:nth-child(2) > a {
       font-weight: 600;
       text-decoration: none;
-    }.site-nav > ul.nav-list:first-child > li:nth-child(2) > button svg {
+    }.site-nav > ul.nav-list:first-child > li:nth-child(2) > button svg,
+    .site-nav > ul.nav-list:first-child > li:nth-child(2) > ul > li:nth-child(2) > button svg {
       transform: rotate(-90deg);
-    }.site-nav > ul.nav-list:first-child > li.nav-list-item:nth-child(2) > ul.nav-list {
+    }.site-nav > ul.nav-list:first-child > li.nav-list-item:nth-child(2) > ul.nav-list,
+    .site-nav > ul.nav-list:first-child > li.nav-list-item:nth-child(2) > ul.nav-list > li.nav-list-item:nth-child(2) > ul.nav-list {
       display: block;
     }
   </style>
@@ -50,20 +53,20 @@
 
 
   <!-- Begin Jekyll SEO tag v2.9.1 -->
-<title>Getting Started | SimplyHost Docs</title>
+<title>Debian | SimplyHost Docs</title>
 <meta name="generator" content="Jekyll v4.4.1" />
-<meta property="og:title" content="Getting Started" />
+<meta property="og:title" content="Debian" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Documentation for SimplyHost" />
 <meta name="twitter:description" property="og:description" content="Documentation for SimplyHost" />
-<link rel="canonical" href="https://docs.simplyhost.org/getting-started.html" />
-<meta property="og:url" content="https://docs.simplyhost.org/getting-started.html" />
+<link rel="canonical" href="https://docs.simplyhost.org/debian.html" />
+<meta property="og:url" content="https://docs.simplyhost.org/debian.html" />
 <meta property="og:site_name" content="SimplyHost Docs" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="Getting Started" />
+<meta name="twitter:title" content="Debian" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"Documentation for SimplyHost","headline":"Getting Started","url":"https://docs.simplyhost.org/getting-started.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"Documentation for SimplyHost","headline":"Debian","url":"https://docs.simplyhost.org/debian.html"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -152,7 +155,9 @@
   <nav aria-label="Main" id="site-nav" class="site-nav">
   
   
-    <ul class="nav-list"><li class="nav-list-item"><a href="/" class="nav-list-link">Home</a></li><li class="nav-list-item"><a href="/getting-started.html" class="nav-list-link">Getting Started</a></li><li class="nav-list-item"><a href="/intro.html" class="nav-list-link">Intro</a></li><li class="nav-list-item"><a href="/resources.html" class="nav-list-link">Resources</a></li></ul>
+    <ul class="nav-list"><li class="nav-list-item"><a href="/" class="nav-list-link">Home</a></li><li class="nav-list-item"><button class="nav-list-expander btn-reset" aria-label="Intro submenu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use xlink:href="#svg-arrow-right"></use></svg>
+      </button><a href="/intro.html" class="nav-list-link">Intro</a><ul class="nav-list"><li class="nav-list-item"><a href="/proxmox.html" class="nav-list-link">Proxmox</a></li><li class="nav-list-item"><a href="/debian.html" class="nav-list-link">Debian</a></li><li class="nav-list-item"><a href="/docker.html" class="nav-list-link">Docker</a></li></ul></li><li class="nav-list-item"><a href="/resources.html" class="nav-list-link">Resources</a></li></ul>
   
 </nav>
 
@@ -205,45 +210,50 @@
 </div>
 
     <div class="main-content-wrap">
-      
+      <nav aria-label="Breadcrumb" class="breadcrumb-nav">
+  <ol class="breadcrumb-nav-list">
+    <li class="breadcrumb-nav-list-item"><a href="/intro.html">Intro</a></li>
+    <li class="breadcrumb-nav-list-item"><span>Debian</span></li>
+  </ol>
+</nav>
+
+
       <div id="main-content" class="main-content">
         <main>
           
-            <h1 id="getting-started">
+            <p><img src="https://www.debian.org/logos/openlogo-nd-75.jpg" alt="Debian" /></p>
+<h1 id="debian">
   
   
-    <a href="#getting-started" class="anchor-heading" aria-labelledby="getting-started"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Getting Started
+    <a href="#debian" class="anchor-heading" aria-labelledby="debian"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Debian
   
   
 </h1>
     
-
-<p>This guide walks through setting up SimplyHost.</p>
-<h2 id="requirements">
+<h2 id="what-is-debian">
   
   
-    <a href="#requirements" class="anchor-heading" aria-labelledby="requirements"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Requirements
+    <a href="#what-is-debian" class="anchor-heading" aria-labelledby="what-is-debian"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> What is Debian?
   
   
 </h2>
     
-
 <ul>
-  <li>A Linux server</li>
-  <li>Docker</li>
-  <li>Docker Compose</li>
-  <li>Network access</li>
+  <li><a href="https://www.debian.org/">Debian</a> is a free to use open-source operating system built on the <a href="https://en.wikipedia.org/wiki/Linux_kernel">Linux kernel</a>.</li>
+  <li>This will be the operating system you will use in your VMs.</li>
 </ul>
-<h2 id="installation">
+<h2 id="why-debian">
   
   
-    <a href="#installation" class="anchor-heading" aria-labelledby="installation"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Installation
+    <a href="#why-debian" class="anchor-heading" aria-labelledby="why-debian"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Why Debian?
   
   
 </h2>
     
-
-<p>Installation instructions will go here.</p>
+<ul>
+  <li>Debian is lightweight, free, and well-supported. It is also the framework Proxmox is built on top of, so its underlying operating system will become familiar.</li>
+  <li><a href="https://ubuntu.com/">Ubuntu</a> is a popular alternative and has more frequent updates, but we will stick to Debian because it is more lightweight.</li>
+</ul>
 
           
 

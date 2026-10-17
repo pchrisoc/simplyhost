@@ -1,88 +1,165 @@
 {"0": {
-    "doc": "Getting Started",
-    "title": "Getting Started",
-    "content": "This guide walks through setting up SimplyHost. ",
-    "url": "/getting-started.html",
+    "doc": "Debian",
+    "title": "Debian",
+    "content": " ",
+    "url": "/debian.html#debian",
     
-    "relUrl": "/getting-started.html"
+    "relUrl": "/debian.html#debian"
   },"1": {
-    "doc": "Getting Started",
-    "title": "Requirements",
-    "content": ". | A Linux server | Docker | Docker Compose | Network access | . ",
-    "url": "/getting-started.html#requirements",
+    "doc": "Debian",
+    "title": "What is Debian?",
+    "content": ". | Debian is a free to use open-source operating system built on the Linux kernel. | This will be the operating system you will use in your VMs. | . ",
+    "url": "/debian.html#what-is-debian",
     
-    "relUrl": "/getting-started.html#requirements"
+    "relUrl": "/debian.html#what-is-debian"
   },"2": {
-    "doc": "Getting Started",
-    "title": "Installation",
-    "content": "Installation instructions will go here. ",
-    "url": "/getting-started.html#installation",
+    "doc": "Debian",
+    "title": "Why Debian?",
+    "content": ". | Debian is lightweight, free, and well-supported. It is also the framework Proxmox is built on top of, so its underlying operating system will become familiar. | Ubuntu is a popular alternative and has more frequent updates, but we will stick to Debian because it is more lightweight. | . ",
+    "url": "/debian.html#why-debian",
     
-    "relUrl": "/getting-started.html#installation"
+    "relUrl": "/debian.html#why-debian"
   },"3": {
+    "doc": "Debian",
+    "title": "Debian",
+    "content": ". ",
+    "url": "/debian.html",
+    
+    "relUrl": "/debian.html"
+  },"4": {
+    "doc": "Docker",
+    "title": "Docker",
+    "content": " ",
+    "url": "/docker.html#docker",
+    
+    "relUrl": "/docker.html#docker"
+  },"5": {
+    "doc": "Docker",
+    "title": "What is Docker?",
+    "content": ". | Docker is a software that packages software into lightweight applications quickly with containers. | Docker Compose is how you will manage all of your containers/applications. | . ",
+    "url": "/docker.html#what-is-docker",
+    
+    "relUrl": "/docker.html#what-is-docker"
+  },"6": {
+    "doc": "Docker",
+    "title": "Why Docker?",
+    "content": ". | With a simple YAML file, you can launch a fully packaged container (application) within seconds! | Docker allows for great organization, management and control of your containers. It is also very widely supported. | . ",
+    "url": "/docker.html#why-docker",
+    
+    "relUrl": "/docker.html#why-docker"
+  },"7": {
+    "doc": "Docker",
+    "title": "Docker",
+    "content": ". ",
+    "url": "/docker.html",
+    
+    "relUrl": "/docker.html"
+  },"8": {
     "doc": "Home",
     "title": "SimplyHost Documentation",
     "content": "SimplyHost makes self-hosting simple and accessible. This documentation covers installation, configuration, networking, storage, and managing applications with SimplyHost. ",
     "url": "/#simplyhost-documentation",
     
     "relUrl": "/#simplyhost-documentation"
-  },"4": {
+  },"9": {
     "doc": "Home",
     "title": "Home",
     "content": " ",
     "url": "/",
     
     "relUrl": "/"
-  },"5": {
+  },"10": {
     "doc": "Intro",
     "title": "Intro",
     "content": " ",
     "url": "/intro.html",
     
     "relUrl": "/intro.html"
-  },"6": {
+  },"11": {
     "doc": "Intro",
     "title": "Who am I?",
     "content": ". | My name is Patrick O’Connor and I studied Electrical Engineering and Computer Science at University of California, Berkeley. | At UC Berkeley, I learned how to use Git, SSH, and various programming languages. | It was my curiosity that led me to discover Docker, Cloudflare, and subsequently self-hosting. | My first self-hosted application was Vaultwarden running on a RaspberryPi (shout out to Uncle Mike if you are reading this, best present ever). | Now I have 4 ProxMox Virtual Environment Nodes running Linux containers (LXCs) and Virtual Machines (VMs) that run close to a hundred various Docker containers. | . ",
     "url": "/intro.html#who-am-i",
     
     "relUrl": "/intro.html#who-am-i"
-  },"7": {
+  },"12": {
     "doc": "Intro",
     "title": "What is self-hosting (in layman terms)?",
     "content": ". | You have a client, and you have a server. | Imagine the physical component of a server as a computer that is always running, and the client as your device, talking to that server. For example, your email app (e.g. Outlook, Mail, Gmail) is a client for viewing the data (e.g. your username, password, and emails) stored on that server. | Self-hosting is taking your own hardware, and hosting your own applications. You are creating your very own server in order to store and access that data with another client (device). My favorite container is Vaultwarden, and it stores all of my passwords on my server. When I update on one device, it sends to the server, and all devices will subsequently update as well. | . ",
     "url": "/intro.html#what-is-self-hosting-in-layman-terms",
     
     "relUrl": "/intro.html#what-is-self-hosting-in-layman-terms"
-  },"8": {
+  },"13": {
     "doc": "Intro",
     "title": "How do I reach my server?",
     "content": ". | Your server exposes applications through ports. | These ports can be accessed when added to the end of that devices IP address. | The Internet Protocol Address (IP address) is assigned to every connection of a device to the network. | There are private network addresses (e.g. 192.168.1.X, 10.0.0.X) and public network addresses. | Private IP addresses are assigned by your router and accessible only on your local network (under the same roof). | Public IP addresses are assigned by your Internet Service Provider (ISP) (e.g. AT&amp;T) and are accessible to everyone from anywhere. You will need to forward a port from your router in order to access via public IP address, but due to security concerns, it is best to use a service like Tailscale that allows remote connections through their servers. You can also use a Virtual Private Server (VPS) hosted by someone else! | Also, your Wi-Fi is not your internet! They are two very different things. Wi-Fi is a family of network protocols that allow connection to your network over radio waves. | In conclusion, your applications on your private, local network will look like: ‘http://192.168.1.50:8080’ (http is unencrypted, https is encrypted). | . ",
     "url": "/intro.html#how-do-i-reach-my-server",
     
     "relUrl": "/intro.html#how-do-i-reach-my-server"
-  },"9": {
+  },"14": {
     "doc": "Intro",
     "title": "Why should you self-host?",
     "content": ". | While there are numerous reasons to self-host, I have found the challenge of learning something new, the retention of my personal data, and the convenience that managing your own software provides as the core reasons I have continued my journey. | Most of everything on this site is open-source with some exceptions (e.g. Tailscale). There is usually an open-source implementation for every closed-source one (e.g. Firefox vs. Chrome), And I like to argue that the open-source option is usually better. | A vast amount of containers (conceptualize this as your various “apps”) can run sufficiently on hardware you already have (e.g. old laptop, old desktop, mobile devices). | Self-hosting can save you money (especially on stupid subscriptions), but with the increasing prices for computer parts and many ways to add to your self-hosting journey that cost money (e.g. VPS and domain subscriptions) it can get to a point where it is a hobby, and hobbies have budgets. | . ",
     "url": "/intro.html#why-should-you-self-host",
     
     "relUrl": "/intro.html#why-should-you-self-host"
-  },"10": {
+  },"15": {
+    "doc": "Proxmox",
+    "title": "Proxmox VE",
+    "content": " ",
+    "url": "/proxmox.html#proxmox-ve",
+    
+    "relUrl": "/proxmox.html#proxmox-ve"
+  },"16": {
+    "doc": "Proxmox",
+    "title": "The One Hypervisor To Rule Them All",
+    "content": " ",
+    "url": "/proxmox.html#the-one-hypervisor-to-rule-them-all",
+    
+    "relUrl": "/proxmox.html#the-one-hypervisor-to-rule-them-all"
+  },"17": {
+    "doc": "Proxmox",
+    "title": "What is a hypervisor?",
+    "content": ". | A hypervisor (in the case of Proxmox VE) is a server virtualization management solution. It is the software that enables the creation and continuous running of virtual machines and LXCs. | . ",
+    "url": "/proxmox.html#what-is-a-hypervisor",
+    
+    "relUrl": "/proxmox.html#what-is-a-hypervisor"
+  },"18": {
+    "doc": "Proxmox",
+    "title": "Why do I need a hypervisor?",
+    "content": ". | While a hypervisor is overkill for certain hardware with lower specs, a lot of homelabbers (including myself) often regret not going straight into Proxmox. The containerization and potential to run more then one operating system is going to prove to help in the long run. | Proxmox also comes with a web UI that allows for a visual interaction with your VMs and LXCs. | . ",
+    "url": "/proxmox.html#why-do-i-need-a-hypervisor",
+    
+    "relUrl": "/proxmox.html#why-do-i-need-a-hypervisor"
+  },"19": {
+    "doc": "Proxmox",
+    "title": "Why Proxmox VE? I really want VMWare ESX!",
+    "content": ". | Proxmox VE is open-source, and enterprise features are free for personal deployments. It is well-maintained, well-documented, and has as great backup system! | No, you don’t want VMWare ESX. Sorry, not sorry Broadcom. | . ",
+    "url": "/proxmox.html#why-proxmox-ve-i-really-want-vmware-esx",
+    
+    "relUrl": "/proxmox.html#why-proxmox-ve-i-really-want-vmware-esx"
+  },"20": {
+    "doc": "Proxmox",
+    "title": "Proxmox",
+    "content": ". ",
+    "url": "/proxmox.html",
+    
+    "relUrl": "/proxmox.html"
+  },"21": {
     "doc": "Resources",
     "title": "Resources",
     "content": " ",
     "url": "/resources.html",
     
     "relUrl": "/resources.html"
-  },"11": {
+  },"22": {
     "doc": "Resources",
     "title": "1. Links to Services I Host",
     "content": ". | Proxmox VE | Proxmox Backup Server | Docker | Portainer | YAMS – Yet Another Media Server | Jellyfin | Sonarr | Radarr | Lidarr | Prowlarr | Audiobookshelf | BookBridge | Storyteller | Nextcloud | Nextcloud All-in-One | Vaultwarden | BookStack | Wiki.js | GeoPulse | SparkyFitness | Home Assistant | n8n | Grafana | Prometheus | Pulse | Pangolin | Newt | Tailscale | Cloudflare | Nginx | PostgreSQL | Redis | OpenZFS | SimplyHost | SimplyHost Documentation | SimplyHost GitHub | . ",
     "url": "/resources.html#1-links-to-services-i-host",
     
     "relUrl": "/resources.html#1-links-to-services-i-host"
-  },"12": {
+  },"23": {
     "doc": "Resources",
     "title": "2. Other Websites — Resources, Helpers, and Fun Stuff",
     "content": ". | Proxmox Community Scripts | Proxmox Forum | Proxmox Documentation | Proxmox Backup Server Documentation | Awesome Selfhosted | Awesome Selfhosted GitHub | selfh.st | selfh.st/apps | Self-Hosted Podcast | r/selfhosted | r/homelab | ServeTheHome | LinuxServer.io | LinuxServer.io Docker Images | Docker Hub | GitHub | GitHub Container Registry | Docker Compose Documentation | OpenZFS Documentation | Debian Documentation | ArchWiki | DigitalOcean Community Tutorials | Hetzner Community Tutorials | Cloudflare Documentation | Tailscale Documentation | Pangolin Documentation | Traefik Documentation | Nginx Documentation | TurnKey Linux | YunoHost | YunoHost App Catalog | Runtipi | Umbrel | CasaOS | Cosmos Cloud | Ansible Documentation | OpenTofu | Terraform | AlternativeTo | Privacy Guides | PrivacyTools.io | It’s FOSS | DistroWatch | Explainshell | Crontab Guru | DNS Checker | MXToolbox | SSL Labs Server Test | Qualys SSL Labs | Can I Use | Regex101 | CyberChef | JSONLint | Mermaid Live Editor | Excalidraw | Diagrams.net | tldraw | ASCIIFlow | Roadmap.sh | Linux Journey | The 512KB Club | The 1MB Club | . ",

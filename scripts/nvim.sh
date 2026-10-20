@@ -84,4 +84,4 @@ select choice in "Linux" "Mac" "Windows" "Quit"; do
     echo "Enter a valid number"
     ;;
   esac
-done
+done </dev/tty

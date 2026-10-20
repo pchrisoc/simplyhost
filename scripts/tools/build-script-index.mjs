@@ -24,8 +24,11 @@ async function findScripts(directory, prefix = '') {
 
 const scripts = (await findScripts(scriptsDirectory)).sort();
 const links = scripts.map((name) => {
-  const url = origin + '/' + name.split('/').map(encodeURIComponent).join('/');
-  return `      <li><a href="${escapeHtml(url)}">${escapeHtml(name)}</a></li>`;
+  const url = origin + '/' + name.split('/').map((segment) =>
+    encodeURIComponent(segment).replace(/[!'()*]/g, (character) =>
+      '%' + character.charCodeAt(0).toString(16).toUpperCase())
+  ).join('/');
+  return `      <li><input type="checkbox" aria-label="Select ${escapeHtml(name)}" data-script-url="${escapeHtml(url)}"> <a href="${escapeHtml(url)}">${escapeHtml(name)}</a></li>`;
 }).join('\n');
 
 await writeFile(path.join(scriptsDirectory, 'index.html'), `<!doctype html>
@@ -39,8 +42,14 @@ await writeFile(path.join(scriptsDirectory, 'index.html'), `<!doctype html>
     :root { color-scheme: light dark; }
     body { max-width: 48rem; margin: 4rem auto; padding: 0 1.5rem; font: 1rem/1.6 system-ui, sans-serif; }
     h1 { line-height: 1.2; }
-    ul { padding-left: 1.5rem; }
+    ul { list-style: none; padding: 0; }
     li { margin: .75rem 0; }
+    input[type="checkbox"] { width: 1.1rem; height: 1.1rem; vertical-align: middle; margin-right: .5rem; }
+    pre { padding: 1.25rem; background: #151922; color: #edf2fa; border-radius: .5rem; overflow-x: auto; }
+    code { font-family: ui-monospace, monospace; font-size: .9rem; }
+    button { font: inherit; padding: .4rem .9rem; cursor: pointer; }
+    button:disabled { cursor: default; }
+    #copy-status { margin-left: .75rem; }
     a { color: light-dark(#1756a9, #92c5ff); text-underline-offset: .2em; }
     li a { font-family: ui-monospace, monospace; }
     footer { margin-top: 3rem; font-size: .875rem; }
@@ -49,10 +58,40 @@ await writeFile(path.join(scriptsDirectory, 'index.html'), `<!doctype html>
 <body>
   <main>
     <h1>SimplyHost Scripts</h1>
-    <p>Browse the available shell scripts. Select a file to view its source.</p>
+    <p>Select scripts to add their install commands below. File links open the source.</p>
+    <pre><code id="commands"># Select a script below to get its install command.</code></pre>
+    <button id="copy" type="button" disabled>Copy commands</button><span id="copy-status" role="status"></span>
+    <h2>Available scripts</h2>
 ${scripts.length ? `    <ul>\n${links}\n    </ul>` : '    <p>No scripts available yet.</p>'}
   </main>
   <footer><a href="https://github.com/pchrisoc/simplyhost/tree/main/scripts">View on GitHub</a></footer>
+  <script>
+    const checkboxes = Array.from(document.querySelectorAll('[data-script-url]'));
+    const commands = document.getElementById('commands');
+    const copyButton = document.getElementById('copy');
+    const copyStatus = document.getElementById('copy-status');
+    let commandText = '';
+
+    function updateCommands() {
+      commandText = checkboxes.filter((checkbox) => checkbox.checked)
+        .map((checkbox) => 'curl -fsSL ' + checkbox.dataset.scriptUrl + ' | bash')
+        .join('\\n');
+      commands.textContent = commandText || '# Select a script below to get its install command.';
+      copyButton.disabled = !commandText;
+      copyStatus.textContent = '';
+    }
+
+    checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateCommands));
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(commandText);
+        copyStatus.textContent = 'Copied!';
+      } catch {
+        copyStatus.textContent = 'Select and copy the commands above manually.';
+      }
+    });
+    updateCommands();
+  </script>
 </body>
 </html>
 `);

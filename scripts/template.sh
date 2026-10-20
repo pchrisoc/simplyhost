@@ -21,7 +21,7 @@ logo() {
 
 # Usage: choice=$(choose "Title" "Option 1" "Option 2" ...)
 choose() {
-  if (( $# < 2 )); then
+  if (($# < 2)); then
     printf 'Usage: choose "Title" "Option 1" ["Option 2" ...]\n' >&2
     return 2
   fi
@@ -41,23 +41,73 @@ choose() {
     done
     IFS= read -r -s -n 1 key </dev/tty || return 1
     case "$key" in
-      $'\033')
-        sequence=''
-        IFS= read -r -s -n 2 -t 1 sequence </dev/tty || true
-        case "$sequence" in
-          '[A'|'OA') selected=$(( (selected + ${#options[@]} - 1) % ${#options[@]} )) ;;
-          '[B'|'OB') selected=$(( (selected + 1) % ${#options[@]} )) ;;
-        esac
-        ;;
-      '')
-        printf '%s\n' "${options[$selected]}"
-        return 0
-        ;;
+    $'\033')
+      sequence=''
+      IFS= read -r -s -n 2 -t 1 sequence </dev/tty || true
+      case "$sequence" in
+      '[A' | 'OA') selected=$(((selected + ${#options[@]} - 1) % ${#options[@]})) ;;
+      '[B' | 'OB') selected=$(((selected + 1) % ${#options[@]})) ;;
+      esac
+      ;;
+    '')
+      printf '%s\n' "${options[$selected]}"
+      return 0
+      ;;
     esac
     printf '\033[%sA' "${#options[@]}" >&2
   done
 }
 
+# Returns selected options on stdout, one per line; an empty selection returns nothing.
+# Usage: selections=$(choose_multi "Install what?" "Neovim" "Docker" "Git")
+choose_multi() {
+  if (($# < 2)); then
+    printf 'Usage: choose_multi "Title" "Option 1" ["Option 2" ...]\n' >&2
+    return 2
+  fi
+  local title="$1"
+  shift
+  local options=("$@")
+  local checked=()
+  local selected=0 index key sequence marker
+  for index in "${!options[@]}"; do
+    checked[$index]=0
+  done
+  printf '%s (Up/Down, Space to toggle, Enter to confirm)\n' "$title" >&2
+  while :; do
+    for index in "${!options[@]}"; do
+      marker=' '
+      if [[ "${checked[$index]}" -eq 1 ]]; then marker='x'; fi
+      printf '\r\033[2K' >&2
+      if [[ "$index" -eq "$selected" ]]; then
+        printf '\033[7m > [%s] %s \033[0m\n' "$marker" "${options[$index]}" >&2
+      else
+        printf '   [%s] %s\n' "$marker" "${options[$index]}" >&2
+      fi
+    done
+    IFS= read -r -s -n 1 key </dev/tty || return 1
+    case "$key" in
+    $'\033')
+      sequence=''
+      IFS= read -r -s -n 2 -t 1 sequence </dev/tty || true
+      case "$sequence" in
+      '[A' | 'OA') selected=$(((selected + ${#options[@]} - 1) % ${#options[@]})) ;;
+      '[B' | 'OB') selected=$(((selected + 1) % ${#options[@]})) ;;
+      esac
+      ;;
+    ' ') checked[$selected]=$((1 - checked[$selected])) ;;
+    '')
+      for index in "${!options[@]}"; do
+        if [[ "${checked[$index]}" -eq 1 ]]; then
+          printf '%s\n' "${options[$index]}"
+        fi
+      done
+      return 0
+      ;;
+    esac
+    printf '\033[%sA' "${#options[@]}" >&2
+  done
+}
 
 logo
 

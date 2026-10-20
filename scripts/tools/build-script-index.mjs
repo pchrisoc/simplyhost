@@ -45,11 +45,14 @@ await writeFile(path.join(scriptsDirectory, 'index.html'), `<!doctype html>
     ul { list-style: none; padding: 0; }
     li { margin: .75rem 0; }
     input[type="checkbox"] { width: 1.1rem; height: 1.1rem; vertical-align: middle; margin-right: .5rem; }
-    pre { padding: 1.25rem; background: #151922; color: #edf2fa; border-radius: .5rem; overflow-x: auto; }
+    .command-block { position: relative; background: #151922; color: #edf2fa; border-radius: .5rem; }
+    pre { margin: 0; padding: 1.25rem 4rem 1.25rem 1.25rem; overflow-x: auto; }
     code { font-family: ui-monospace, monospace; font-size: .9rem; }
-    button { font: inherit; padding: .4rem .9rem; cursor: pointer; }
-    button:disabled { cursor: default; }
-    #copy-status { margin-left: .75rem; }
+    #copy { position: absolute; top: .75rem; right: .75rem; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; border: 1px solid #5b6575; border-radius: .35rem; background: #151922; color: #edf2fa; cursor: pointer; }
+    #copy:disabled { cursor: default; opacity: .4; }
+    #copy:hover:enabled { background: #303949; }
+    #copy:focus-visible { outline: 2px solid #92c5ff; outline-offset: 2px; }
+    #copy-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     a { color: light-dark(#1756a9, #92c5ff); text-underline-offset: .2em; }
     li a { font-family: ui-monospace, monospace; }
     footer { margin-top: 3rem; font-size: .875rem; }
@@ -59,8 +62,13 @@ await writeFile(path.join(scriptsDirectory, 'index.html'), `<!doctype html>
   <main>
     <h1>SimplyHost Scripts</h1>
     <p>Select scripts to add their install commands below. File links open the source.</p>
-    <pre><code id="commands"># Select a script below to get its install command.</code></pre>
-    <button id="copy" type="button" disabled>Copy commands</button><span id="copy-status" role="status"></span>
+    <div class="command-block">
+      <pre><code id="commands"># Select a script below to get its install command.</code></pre>
+      <button id="copy" type="button" aria-label="Copy commands" title="Copy commands" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg>
+      </button>
+    </div>
+    <span id="copy-status" role="status"></span>
     <h2>Available scripts</h2>
 ${scripts.length ? `    <ul>\n${links}\n    </ul>` : '    <p>No scripts available yet.</p>'}
   </main>

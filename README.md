@@ -8,6 +8,8 @@ Optional **Budget Mode** shows how every selection affects available RAM, CPU ca
 
 > **Status:** Planning and development roadmap. Features below are intended goals, not claims of existing functionality.
 
+Standalone setup and maintenance utilities are available now. See the [script guide](scripts/README.md), or run `bash scripts/menu.sh` from a local checkout.
+
 ## Project goals
 
 - [ ] Make Proxmox self-hosting approachable for beginners.

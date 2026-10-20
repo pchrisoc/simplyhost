@@ -141,16 +141,53 @@ install_neovim_archive() (
   ln -s "$target/bin/nvim" "$HOME/.local/bin/nvim"
 )
 
+persist_neovim_path() {
+  local bin_directory="$1" login_shell="${2:-${SHELL:-/bin/bash}}"
+  local path_line startup_file zsh_directory="${ZDOTDIR:-$HOME}"
+  local startup_files=()
+  case "$bin_directory" in
+    /usr/bin|/bin) return 0 ;;
+  esac
+  # Quote paths containing spaces or shell metacharacters before saving them.
+  printf -v path_line 'export PATH=%q:"$PATH"' "$bin_directory"
+  case "${login_shell##*/}" in
+    bash)
+      startup_files=("$HOME/.bashrc" "$HOME/.profile")
+      if [[ -f "$HOME/.bash_profile" ]]; then
+        startup_files+=("$HOME/.bash_profile")
+      elif [[ -f "$HOME/.bash_login" ]]; then
+        startup_files+=("$HOME/.bash_login")
+      fi
+      ;;
+    zsh) startup_files=("$zsh_directory/.zshrc" "$zsh_directory/.zprofile") ;;
+    *)
+      printf 'Add this to your shell startup configuration:\n%s\n' "$path_line"
+      return 0
+      ;;
+  esac
+  for startup_file in "${startup_files[@]}"; do
+    mkdir -p "$(dirname "$startup_file")"
+    if [[ ! -f "$startup_file" ]] || ! grep -Fqx -- "$path_line" "$startup_file"; then
+      printf '\n# SimplyHost: Neovim command\n%s\n' "$path_line" >> "$startup_file"
+      printf 'Saved Neovim PATH in %s\n' "$startup_file"
+    fi
+  done
+  printf 'Open a new terminal to use nvim, or run this in your current shell:\n%s\n' "$path_line"
+}
+
 ensure_neovim() {
   local platform="$1" architecture candidate
   if command -v nvim >/dev/null 2>&1; then
     printf 'Neovim already installed: %s\n' "$(command -v nvim)"
+    candidate=$(command -v nvim)
+    if [[ "$candidate" == */* ]]; then persist_neovim_path "$(dirname "$candidate")"; fi
     return 0
   fi
   for candidate in "$HOME/.local/bin/nvim" /opt/nvim-linux-x86_64/bin/nvim /opt/nvim-linux-arm64/bin/nvim; do
     if [[ -x "$candidate" ]]; then
       export PATH="$(dirname "$candidate"):$PATH"
       printf 'Found existing Neovim: %s\n' "$candidate"
+      persist_neovim_path "$(dirname "$candidate")"
       return 0
     fi
   done
@@ -168,8 +205,9 @@ ensure_neovim() {
     fi
     install_neovim_archive "nvim-${platform}-${architecture}"
     export PATH="$HOME/.local/bin:$PATH"
-    printf 'Neovim installed in ~/.local/bin. Add that directory to your shell PATH if needed.\n'
+    printf 'Neovim installed in ~/.local/bin.\n'
   fi
+  persist_neovim_path "$(dirname "$(command -v nvim)")"
 }
 
 choice=$(choose "What OS?" "Linux" "Mac" "Windows" "Quit")

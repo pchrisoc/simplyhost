@@ -12,6 +12,7 @@ SOURCE = (REPO / 'scripts/nvim.sh').read_text()
 FUNCTIONS = SOURCE[SOURCE.index('backup_path() {'):SOURCE.index('\nchoice=$(choose')]
 # Keep test filesystem operations away from the real user's home and XDG paths.
 FUNCTIONS = FUNCTIONS.replace('$HOME', '$task_home').replace('${XDG_CONFIG_HOME:', '${task_config_home:')
+FUNCTIONS = FUNCTIONS.replace('${ZDOTDIR:', '${task_zdotdir:').replace('${SHELL:-', '${task_shell:-')
 
 
 class InstallerTests(unittest.TestCase):
@@ -108,6 +109,51 @@ install_neovim_archive() { return 99; }
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((location / 'nvim/init.lua').exists())
         self.assertFalse(self.config.exists())
+
+    def test_bash_path_persists_and_is_not_duplicated(self):
+        self.home.mkdir()
+        (self.home / '.bash_profile').write_text('# existing login setup\n')
+        executable = self.home / '.local/bin/nvim'
+        executable.parent.mkdir(parents=True)
+        executable.write_text('#!/bin/sh\nexit 0\n')
+        executable.chmod(0o755)
+        result = self.run_installer('''
+persist_neovim_path "$task_home/.local/bin" bash
+persist_neovim_path "$task_home/.local/bin" bash
+bash -c 'PATH=/usr/bin:/bin; source "$1"; command -v nvim' _ "$task_home/.bashrc"
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(str(executable), result.stdout)
+        for name in ['.bashrc', '.profile', '.bash_profile']:
+            text = (self.home / name).read_text()
+            self.assertEqual(text.count('export PATH='), 1)
+        self.assertIn('# existing login setup', (self.home / '.bash_profile').read_text())
+
+    def test_zsh_path_with_spaces_and_custom_zdotdir(self):
+        directory = self.home / 'tools with spaces/bin'
+        result = self.run_installer('''
+task_zdotdir="$task_home/zsh-config"
+persist_neovim_path "$task_home/tools with spaces/bin" zsh
+bash -c 'PATH=/usr/bin:/bin; source "$1"; printf "%s" "$PATH"' _ "$task_zdotdir/.zshrc"
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(str(directory) + ':/usr/bin:/bin', result.stdout)
+        self.assertTrue((self.home / 'zsh-config/.zprofile').exists())
+
+    def test_detected_install_repairs_startup_path(self):
+        executable = self.home / '.local/bin/nvim'
+        executable.parent.mkdir(parents=True)
+        executable.write_text('#!/bin/sh\nexit 0\n')
+        executable.chmod(0o755)
+        result = self.run_installer('ensure_neovim linux', mock='''
+command() {
+  if [[ "$1" == -v && "$2" == nvim ]]; then return 1; fi
+  builtin command "$@"
+}
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Found existing Neovim', result.stdout)
+        self.assertTrue((self.home / '.bashrc').exists())
 
 
 if __name__ == '__main__':

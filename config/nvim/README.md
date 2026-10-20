@@ -9,7 +9,10 @@ The Linux and Mac branches of `scripts/nvim.sh` install this directory in
 `${XDG_CONFIG_HOME:-~/.config}/nvim`. The installer checks for an existing Neovim
 executable before installing anything. Linux and Mac downloads support x86_64
 and ARM64; macOS uses Homebrew when available. Archive installs use
-`~/.local/bin/nvim`; include `~/.local/bin` in your shell PATH for future sessions.
+`~/.local/bin/nvim`. The installer saves the Neovim executable directory in Bash
+or Zsh startup files, including when repairing an existing installation outside
+PATH. Reopen your terminal or run the printed export command to update the parent
+shell after a piped installation. Repeated runs do not duplicate the same export.
 
 If LazyVim is already configured, only `colorscheme.lua`, `completion.lua`,
 `dashboard.lua`, and `simplyhost-options.lua` in `lua/plugins` are applied.

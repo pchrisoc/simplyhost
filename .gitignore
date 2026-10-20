@@ -1,0 +1,5 @@
+.DS_Store
+nvim.log
+*.swp
+*.swo
+scripts/nvim-*.tar.gz

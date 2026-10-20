@@ -21,43 +21,19 @@ logo() {
 
 logo
 
-# Usage: choice=$(choose "Title" "Option 1" "Option 2" ...)
-choose() {
-  if (($# < 2)); then
-    printf 'Usage: choose "Title" "Option 1" ["Option 2" ...]\n' >&2
-    return 2
-  fi
-  local title="$1"
-  shift
-  local options=("$@")
-  local selected=0 index key sequence
-  printf '%s (Up/Down, Enter)\n' "$title" >&2
-  while :; do
-    for index in "${!options[@]}"; do
-      printf '\r\033[2K' >&2
-      if [[ "$index" -eq "$selected" ]]; then
-        printf '\033[7m > %s \033[0m\n' "${options[$index]}" >&2
-      else
-        printf '   %s\n' "${options[$index]}" >&2
-      fi
-    done
-    IFS= read -r -s -n 1 key </dev/tty || return 1
-    case "$key" in
-    $'\033')
-      sequence=''
-      IFS= read -r -s -n 2 -t 1 sequence </dev/tty || true
-      case "$sequence" in
-      '[A' | 'OA') selected=$(((selected + ${#options[@]} - 1) % ${#options[@]})) ;;
-      '[B' | 'OB') selected=$(((selected + 1) % ${#options[@]})) ;;
-      esac
+detect_os() {
+  case "$(uname -s)" in
+    Linux) printf 'linux\n' ;;
+    Darwin) printf 'macos\n' ;;
+    MINGW*|MSYS*|CYGWIN*)
+      printf 'Native Windows is not supported by this Bash installer. Run it inside WSL instead.\n' >&2
+      return 1
       ;;
-    '')
-      printf '%s\n' "${options[$selected]}"
-      return 0
+    *)
+      printf 'Unsupported operating system: %s\n' "$(uname -s)" >&2
+      return 1
       ;;
-    esac
-    printf '\033[%sA' "${#options[@]}" >&2
-  done
+  esac
 }
 
 backup_path() {
@@ -210,37 +186,8 @@ ensure_neovim() {
   persist_neovim_path "$(dirname "$(command -v nvim)")"
 }
 
-choice=$(choose "What OS?" "Linux" "Mac" "Windows" "Quit")
-case "$choice" in
-"Linux")
-  ensure_neovim linux
-
-  install_lazyvim
-  nvim </dev/tty
-  ;;
-"Mac")
-  ensure_neovim macos
-
-  install_lazyvim
-  nvim </dev/tty
-  ;;
-"Windows")
-  # NeoVim
-  winget install Neovim.Neovim
-
-  # LazyVim
-  # required
-  Move-Item $env:LOCALAPPDATA\nvim $env:LOCALAPPDATA\nvim.bak
-  # optional but recommended
-  Move-Item $env:LOCALAPPDATA\nvim-data $env:LOCALAPPDATA\nvim-data.bak
-  git clone https://github.com/LazyVim/starter $env:LOCALAPPDATA\nvim
-  Remove-Item $env:LOCALAPPDATA\nvim\.git -Recurse -Force
-  nvim
-  ;;
-"Quit")
-  exit 0
-  ;;
-*)
-  echo "Unknown OS selection"
-  ;;
-esac
+platform=$(detect_os)
+printf 'Detected OS: %s · CPU: %s\n' "$platform" "$(uname -m)"
+ensure_neovim "$platform"
+install_lazyvim
+nvim </dev/tty

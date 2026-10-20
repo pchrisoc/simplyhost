@@ -5,7 +5,7 @@ teal theme, SimplyHost dashboard, completion bindings (Enter for newline,
 Shift+Enter to accept when supported by the terminal), editor options, and
 plugin version lockfile.
 
-The Linux and Mac branches of `scripts/nvim.sh` install this directory in
+`scripts/nvim.sh` automatically detects Linux (including WSL) or macOS and installs this directory in
 `${XDG_CONFIG_HOME:-~/.config}/nvim`. The installer checks for an existing Neovim
 executable before installing anything. Linux and Mac downloads support x86_64
 and ARM64; macOS uses Homebrew when available. Archive installs use
@@ -25,8 +25,8 @@ For a fresh install the entire saved config is copied. An existing non-LazyVim
 config is backed up as a directory first. Downloads are staged and validated
 before configuration backups or changes. LazyVim installs plugins on first launch.
 
-These installation and update steps apply to the Linux and Mac branches. The
-existing Windows branch has not been converted into a native PowerShell installer.
+Native Windows shells are detected and exit with a message to use WSL; this Bash
+installer does not execute PowerShell commands.
 
 When run from this checkout, the installer uses this local directory. When piped
 from a URL, it downloads this directory from the repository's `main` branch.

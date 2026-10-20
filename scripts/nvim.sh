@@ -23,7 +23,7 @@ logo
 
 PS3="What OS? "
 
-select choice in "Linux" "Mac" "Windows" "Quit"; do
+choice=$(gum choose "Linux" "Mac" "Windows" "Quit") </dev/tty)
   case "$choice" in
   "Linux")
     #NeoVim

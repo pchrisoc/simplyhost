@@ -2,7 +2,7 @@ import { readdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const scriptsDirectory = fileURLToPath(new URL('../scripts/', import.meta.url));
+const scriptsDirectory = fileURLToPath(new URL('../', import.meta.url));
 const origin = 'https://scripts.simplyhost.org';
 const escapeHtml = (value) => value.replace(/[&<>"']/g, (character) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

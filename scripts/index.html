@@ -82,7 +82,7 @@
         return '# Run in PowerShell:\nInvoke-WebRequest -Uri ' + url + ' -OutFile ' + downloadName + '; & .\\' + downloadName;
       }
       const shell = {sh: 'bash', bash: 'bash', zsh: 'zsh', fish: 'fish'}[ext];
-      if (shell) return '# Run in ' + shell + ':\ncurl -fsSL ' + url + ' | ' + shell;
+      if (shell) return 'curl -fsSL ' + url + ' | ' + shell;
       const runtime = {py: 'python3', js: 'node', mjs: 'node', cjs: 'node', rb: 'ruby', pl: 'perl', php: 'php', lua: 'lua', r: 'Rscript', swift: 'swift'}[ext];
       const download = 'curl -fsSL ' + url + ' -o ' + downloadName;
       if (runtime) return '# Run in a Unix shell with ' + runtime + ':\n' + download + ' && ' + runtime + ' ' + downloadName;

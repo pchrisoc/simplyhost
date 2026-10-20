@@ -131,4 +131,6 @@ Remove the SimplyHost fragment to remove its Windows Terminal profile and scheme
 
 Edit the standalone scripts directly. The index discovers executable files and common script extensions anywhere under `scripts/` from GitHub when the page loads. Push additions, renames, or deletions to `main`; no index generation command is needed. Use Refresh on the page to reload the list. GitHub API availability and unauthenticated rate limits apply.
 
+Cloudflare Pages can use `scripts` as the root directory, an empty build command, and `.` as the output directory. For existing projects that still run `node tools/build-script-index.mjs`, a small compatibility entry point verifies the index is present. It does not regenerate files. Internal deployment helpers under `tools/` are excluded from the public script list.
+
 Keep inventory exports, local terminal exports, shell profiles, credentials, and backup archives outside the repository. Ignore rules cover common names, but review any files before committing.

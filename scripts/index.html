@@ -68,7 +68,7 @@
     function isScript(entry) {
       if (entry.type !== 'blob' || !entry.path.startsWith('scripts/')) return false;
       const name = entry.path.slice('scripts/'.length);
-      if (!name || name.split('/').some(segment => segment.startsWith('.'))) return false;
+      if (!name || name.startsWith('tools/') || name.split('/').some(segment => segment.startsWith('.'))) return false;
       return scriptExtensions.has(extension(name)) || entry.mode === '100755';
     }
     function runCommand(name) {

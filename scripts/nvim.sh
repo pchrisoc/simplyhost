@@ -70,15 +70,24 @@ case "$choice" in
   export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 
   #LazyVim
-  # required
-  mv ~/.config/nvim{,.bak}
-  # optional but recommended
-  mv ~/.local/share/nvim{,.bak}
-  mv ~/.local/state/nvim{,.bak}
-  mv ~/.cache/nvim{,.bak}
-  git clone https://github.com/LazyVim/starter ~/.config/nvim
-  rm -rf ~/.config/nvim/.git
-  nvim
+  # Back up existing configuration and data without overwriting earlier backups.
+  for directory in "$HOME/.config/nvim" "$HOME/.local/share/nvim" \
+    "$HOME/.local/state/nvim" "$HOME/.cache/nvim"; do
+    if [[ -e "$directory" || -L "$directory" ]]; then
+      backup="${directory}.bak"
+      suffix=1
+      while [[ -e "$backup" || -L "$backup" ]]; do
+        backup="${directory}.bak.${suffix}"
+        suffix=$((suffix + 1))
+      done
+      mv -- "$directory" "$backup"
+      printf 'Backed up %s to %s\n' "$directory" "$backup"
+    fi
+  done
+  mkdir -p "$HOME/.config"
+  git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+  rm -rf "$HOME/.config/nvim/.git"
+  nvim </dev/tty
   ;;
 "Mac")
   #NeoWim

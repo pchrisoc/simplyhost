@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# Keep the invoking shell's PATH before this installer adds private directories.
+original_path="$PATH"
+
 logo() {
   printf '\033[2J\033[H'
   echo "   _____ _                 _       "
@@ -148,7 +151,42 @@ persist_neovim_path() {
       printf 'Saved Neovim PATH in %s\n' "$startup_file"
     fi
   done
-  printf 'Open a new terminal to use nvim, or run this in your current shell:\n%s\n' "$path_line"
+}
+
+expose_neovim_command() {
+  local executable="$1" parent_path="$2" link=/usr/local/bin/nvim
+  # If the original PATH already resolves nvim, no global link is necessary.
+  if (export PATH="$parent_path"; command -v nvim >/dev/null 2>&1); then
+    return 0
+  fi
+  case ":$parent_path:" in
+    *:/usr/local/bin:*) ;;
+    *)
+      printf '/usr/local/bin is not on your current PATH; cannot expose nvim to this shell automatically.\n' >&2
+      return 1
+      ;;
+  esac
+  if [[ -e "$link" || -L "$link" ]]; then
+    printf 'Cannot create %s: a file already exists there. It was not replaced.\n' "$link" >&2
+    return 1
+  fi
+  if [[ -d /usr/local/bin && -w /usr/local/bin ]]; then
+    ln -s "$executable" "$link"
+  else
+    if ! command -v sudo >/dev/null 2>&1; then
+      printf 'sudo is required to create %s.\n' "$link" >&2
+      return 1
+    fi
+    printf 'Creating %s so nvim works in your current shell.\n' "$link"
+    sudo -v </dev/tty
+    sudo mkdir -p /usr/local/bin
+    sudo ln -s "$executable" "$link"
+  fi
+  if ! (export PATH="$parent_path"; command -v nvim >/dev/null 2>&1); then
+    printf 'Neovim is still unavailable on the original PATH.\n' >&2
+    return 1
+  fi
+  printf 'nvim is now available from your current shell.\n'
 }
 
 ensure_neovim() {
@@ -189,5 +227,6 @@ ensure_neovim() {
 platform=$(detect_os)
 printf 'Detected OS: %s · CPU: %s\n' "$platform" "$(uname -m)"
 ensure_neovim "$platform"
+expose_neovim_command "$(command -v nvim)" "$original_path"
 install_lazyvim
 nvim </dev/tty

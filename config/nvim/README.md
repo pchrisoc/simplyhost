@@ -11,8 +11,12 @@ executable before installing anything. Linux and Mac downloads support x86_64
 and ARM64; macOS uses Homebrew when available. Archive installs use
 `~/.local/bin/nvim`. The installer saves the Neovim executable directory in Bash
 or Zsh startup files, including when repairing an existing installation outside
-PATH. Reopen your terminal or run the printed export command to update the parent
-shell after a piped installation. Repeated runs do not duplicate the same export.
+PATH. Repeated runs do not duplicate the same export. If Neovim is unavailable on
+the invoking shell's original PATH, the installer also creates
+`/usr/local/bin/nvim` as a link to the executable, requesting sudo when necessary.
+This makes the command available immediately after a piped installation, without
+restarting the shell. The installer verifies `/usr/local/bin` is on that original
+PATH and refuses to overwrite an existing file or link.
 
 If LazyVim is already configured, only `colorscheme.lua`, `completion.lua`,
 `dashboard.lua`, and `simplyhost-options.lua` in `lua/plugins` are applied.

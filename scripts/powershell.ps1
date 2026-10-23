@@ -767,6 +767,27 @@ function Set-SimplyHostTerminalDefault {
     }
 }
 
+function Test-SimplyHostNerdFont {
+    param([object[]]$Hives = @([Microsoft.Win32.Registry]::CurrentUser, [Microsoft.Win32.Registry]::LocalMachine))
+    foreach ($hive in $Hives) {
+        if ($null -eq $hive) { continue }
+        $key = $null
+        try {
+            $key = $hive.OpenSubKey('SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts')
+            if ($null -eq $key) { continue }
+            # Read registry value names directly; avoid PowerShell's adapted property collections.
+            foreach ($fontName in $key.GetValueNames()) {
+                if ($fontName -match 'JetBrainsMono.*Nerd Font Mono') { return $true }
+            }
+        } catch [System.UnauthorizedAccessException] {
+            Write-Warning 'Could not read a font registry key; checking the remaining font locations.'
+        } finally {
+            if ($null -ne $key) { $key.Dispose() }
+        }
+    }
+    return $false
+}
+
 function Confirm-SimplyHostOption {
     param([string]$Question)
     if ($NoPrompt -or $WhatIfPreference -or [Console]::IsInputRedirected) { return $false }
@@ -791,6 +812,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
+Write-Host ('SimplyHost terminal setup 2026.10.23.2 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -818,20 +840,7 @@ if (-not $SkipPrompt) {
         }
     }
     if ($poshCommand -and -not $SkipFontInstall) {
-        $fontPresent = $false
-        foreach ($fontKey in @('HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts', 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts')) {
-            if (Test-Path -LiteralPath $fontKey) {
-                $fontValues = Get-ItemProperty -LiteralPath $fontKey
-                if ($null -eq $fontValues) { continue }
-                # Explicit enumeration also handles empty keys under Windows PowerShell 5.1 strict mode.
-                foreach ($fontProperty in $fontValues.PSObject.Properties) {
-                    if ($fontProperty.Name -match 'JetBrainsMono.*Nerd Font Mono') {
-                        $fontPresent = $true
-                        break
-                    }
-                }
-            }
-        }
+        $fontPresent = Test-SimplyHostNerdFont
         if (-not $fontPresent -and $PSCmdlet.ShouldProcess('JetBrains Mono Nerd Font', 'Install the font required for powerline icons')) {
             & $poshCommand font install 'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip'
             if ($LASTEXITCODE -ne 0) { throw 'Font installation failed. Install JetBrainsMono Nerd Font Mono, then rerun (or use -SkipFontInstall if already installed).' }

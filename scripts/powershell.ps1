@@ -838,6 +838,24 @@ function Test-SimplyHostNerdFont {
     return $false
 }
 
+function Install-SimplyHostStartMenuShortcut {
+    param([string]$ProfileGuid, [string]$TerminalExecutable)
+    if (-not $env:APPDATA -or -not $TerminalExecutable) { return }
+    $programs = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+    $path = Join-Path $programs 'SimplyHost PowerShell.lnk'
+    if ($PSCmdlet.ShouldProcess($path, 'Save a Start-menu entry for the themed PowerShell profile')) {
+        [IO.Directory]::CreateDirectory($programs) | Out-Null
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($path)
+        $shortcut.TargetPath = $TerminalExecutable
+        $shortcut.Arguments = '-w new new-tab -p ' + $ProfileGuid
+        $shortcut.WorkingDirectory = [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)
+        $shortcut.Description = 'PowerShell with the SimplyHost Solarized Dark theme and Nerd Font'
+        $shortcut.Save()
+        Write-Host 'Saved Start-menu entry: SimplyHost PowerShell. Use this entry when reopening your themed terminal.'
+    }
+}
+
 function Confirm-SimplyHostOption {
     param([string]$Question)
     if ($NoPrompt -or $WhatIfPreference -or [Console]::IsInputRedirected) { return $false }
@@ -862,7 +880,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.5 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.6 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -934,6 +952,10 @@ if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShel
         $quotedPath = $savedScript.Replace("'", "''")
         Set-SimplyHostProfileBlock -Name 'command' -Body ("function global:sh-terminal { & '" + $quotedPath + "' @args }")
     }
+}
+$terminalExecutable = Get-Command wt.exe -CommandType Application -ErrorAction SilentlyContinue
+if ($terminalExecutable) {
+    Install-SimplyHostStartMenuShortcut -ProfileGuid $terminalProfile.guid -TerminalExecutable $terminalExecutable.Path
 }
 if (-not $NoLaunch) {
     if (Get-Command wt.exe -ErrorAction SilentlyContinue) {

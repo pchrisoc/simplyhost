@@ -47,7 +47,7 @@
   <script>
     const repository = 'pchrisoc/simplyhost';
     const branch = 'main';
-    const rawRoot = 'https://raw.githubusercontent.com/' + repository + '/' + branch + '/scripts/';
+    const scriptRoot = 'https://scripts.simplyhost.org/';
     const scriptsList = document.getElementById('scripts');
     const commands = document.getElementById('commands');
     const copyButton = document.getElementById('copy');
@@ -72,7 +72,7 @@
       return scriptExtensions.has(extension(name)) || entry.mode === '100755';
     }
     function runCommand(name) {
-      const url = rawRoot + encodedPath(name);
+      const url = scriptRoot + encodedPath(name);
       const ext = extension(name);
       const downloadName = 'simplyhost-script' + (/^[a-z0-9]+$/.test(ext) ? '.' + ext : '');
       if (ext === 'ps1') {
@@ -106,7 +106,7 @@
         checkbox.setAttribute('aria-label', 'Select ' + name);
         checkbox.checked = selected.has(name);
         const link = document.createElement('a');
-        link.href = rawRoot + encodedPath(name);
+        link.href = scriptRoot + encodedPath(name);
         link.textContent = name;
         row.append(checkbox, ' ', link);
         return row;

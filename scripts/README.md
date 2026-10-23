@@ -98,7 +98,7 @@ Run from a local checkout, or download into your temporary directory:
 
 ```powershell
 $installer = Join-Path $env:TEMP 'simplyhost-terminal.ps1'
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/pchrisoc/simplyhost/main/scripts/powershell.ps1 -OutFile $installer
+Invoke-WebRequest -Uri https://scripts.simplyhost.org/powershell.ps1 -OutFile $installer
 & $installer -AddCommand -NoPrompt
 ```
 

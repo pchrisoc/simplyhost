@@ -742,6 +742,78 @@ function Set-SimplyHostActiveProfileAppearance {
     return $Content
 }
 
+function Set-SimplyHostLaunchAppearance {
+    param([string]$Content, [object]$ManagedProfile)
+    # Console hand-off matches the executable to a profile, or uses profiles.defaults.
+    # It need not select defaultProfile or supply WT_PROFILE_ID/WT_SESSION.
+    $appearance = [ordered]@{}
+    foreach ($name in @('font','colorScheme','background','foreground','cursorColor','opacity','useAcrylic')) {
+        $appearance[$name] = $ManagedProfile.$name
+    }
+    $appearance['unfocusedAppearance'] = @{
+        background = $ManagedProfile.background
+        foreground = $ManagedProfile.foreground
+        colorScheme = $ManagedProfile.colorScheme
+        opacity = 100
+        useAcrylic = $false
+    }
+    $tokens = @(Get-SimplyHostJsonTokens -Content $Content)
+    $profiles = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $tokens[0].Index -Name 'profiles'
+    $defaults = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $profiles.Start -Name 'defaults'
+    if ($null -eq $defaults) {
+        $Content = Set-SimplyHostJsonProperty -Content $Content -ObjectStart $profiles.Start -Name 'defaults' -ValueJson '{}'
+        $tokens = @(Get-SimplyHostJsonTokens -Content $Content)
+        $defaults = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $profiles.Start -Name 'defaults'
+    }
+    if ($tokens[$defaults.TokenIndex].Value -ne '{') { throw 'Expected profiles.defaults to be an object.' }
+    foreach ($name in $appearance.Keys) {
+        $Content = Set-SimplyHostJsonProperty -Content $Content -ObjectStart $defaults.Start -Name $name -ValueJson (ConvertTo-Json -InputObject $appearance[$name] -Depth 10 -Compress)
+    }
+    $tokens = @(Get-SimplyHostJsonTokens -Content $Content)
+    $list = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $profiles.Start -Name 'list'
+    $starts = @()
+    $depth = 0
+    $windowsPowerShellFound = $false
+    for ($index = $list.TokenIndex; $index -le $list.TokenEnd; $index++) {
+        $token = $tokens[$index]
+        if ($depth -eq 1 -and $token.Value -eq '{') {
+            $values = @{}
+            foreach ($name in @('guid','source','commandline','name')) {
+                $property = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $token.Index -Name $name
+                if ($null -ne $property) {
+                    $value = ConvertFrom-Json -InputObject ('{"value":' + $Content.Substring($property.Start, $property.End - $property.Start) + '}')
+                    $values[$name] = [string]$value.value
+                }
+            }
+            $isBuiltIn = $values['guid'] -eq '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}'
+            if ($isBuiltIn) { $windowsPowerShellFound = $true }
+            $isShell = $false
+            if ($values['commandline'] -match '^\s*(?:"(?<exe>[^"]+)"|(?<exe>[^\s"]+))') {
+                $isShell = $Matches['exe'] -match '(?:^|[\\/])(?:powershell|pwsh)(?:\.exe)?$'
+            }
+            if ($isBuiltIn -or $isShell -or $values['source'] -eq 'Windows.Terminal.PowershellCore' -or
+                (-not $values['commandline'] -and $values['name'] -in @('Windows PowerShell','PowerShell','SimplyHost PowerShell'))) {
+                $starts += $token.Index
+            }
+        }
+        if ($token.Value -eq '{' -or $token.Value -eq '[') { $depth++ }
+        if ($token.Value -eq '}' -or $token.Value -eq ']') { $depth-- }
+    }
+    # Work backwards so earlier object offsets remain valid while editing later ones.
+    for ($index = $starts.Count - 1; $index -ge 0; $index--) {
+        foreach ($name in $appearance.Keys) {
+            $Content = Set-SimplyHostJsonProperty -Content $Content -ObjectStart $starts[$index] -Name $name -ValueJson (ConvertTo-Json -InputObject $appearance[$name] -Depth 10 -Compress)
+        }
+    }
+    if (-not $windowsPowerShellFound) {
+        $override = [ordered]@{ guid = '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}' }
+        foreach ($name in $appearance.Keys) { $override[$name] = $appearance[$name] }
+        $json = ConvertTo-Json -InputObject $override -Depth 20 -Compress
+        $Content = $Content.Insert($list.Start + 1, "`r`n$json,`r`n")
+    }
+    return $Content
+}
+
 function Set-SimplyHostTerminalSettings {
     param([object]$ManagedProfile, [switch]$KeepDefault)
     $paths = @(
@@ -811,6 +883,7 @@ function Set-SimplyHostTerminalSettings {
                 }
             }
         }
+        $content = Set-SimplyHostLaunchAppearance -Content $content -ManagedProfile $ManagedProfile
         $content = Set-SimplyHostActiveProfileAppearance -Content $content -ManagedProfile $ManagedProfile
         if ($PSCmdlet.ShouldProcess($path, 'Apply Solarized Dark and the Nerd Font to SimplyHost and the active Terminal profile')) { Write-SimplyHostFile -Path $path -Content $content }
     }
@@ -863,13 +936,14 @@ function Install-SimplyHostConsoleAppearance {
 # Applied on every PowerShell startup, including the built-in Start-menu shortcut.
 if ($env:OS -eq 'Windows_NT' -and $Host.Name -eq 'ConsoleHost' -and -not $env:WT_SESSION) {
     try {
-        if (-not ('SimplyHost.ConsoleAppearanceV2' -as [type])) {
+        if (-not ('SimplyHost.ConsoleAppearanceV3' -as [type])) {
             Add-Type -TypeDefinition @"
 using System;
 using System.ComponentModel;
+using System.Text;
 using System.Runtime.InteropServices;
 namespace SimplyHost {
-    public static class ConsoleAppearanceV2 {
+    public static class ConsoleAppearanceV3 {
         [StructLayout(LayoutKind.Sequential)] public struct Coord { public short X, Y; }
         [StructLayout(LayoutKind.Sequential)] public struct Rect { public short Left, Top, Right, Bottom; }
         [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] public struct FontInfo {
@@ -890,7 +964,7 @@ namespace SimplyHost {
         }
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int kind);
         [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
-        [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] static extern bool IsWindowVisible(IntPtr window);
+        [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr window, StringBuilder name, int maximum);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleMode(IntPtr handle, out uint mode);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleMode(IntPtr handle, uint mode);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleScreenBufferInfoEx(IntPtr handle, ref BufferInfo info);
@@ -901,10 +975,16 @@ namespace SimplyHost {
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool ReadConsoleOutputAttribute(IntPtr handle, [Out] ushort[] data, uint length, Coord start, out uint count);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool WriteConsoleOutputAttribute(IntPtr handle, ushort[] data, uint length, Coord start, out uint count);
         static void Check(bool success) { if (!success) throw new Win32Exception(Marshal.GetLastWin32Error()); }
-        public static void Apply() {
+        public static bool Apply() {
+            // Pseudoconsole windows may have WS_VISIBLE: visibility is not a host test.
+            // Only touch classic console buffers/fonts for the actual ConsoleWindowClass.
+            IntPtr window = GetConsoleWindow();
+            StringBuilder name = new StringBuilder(256);
+            if (window == IntPtr.Zero || GetClassName(window, name, name.Capacity) == 0 ||
+                !String.Equals(name.ToString(), "ConsoleWindowClass", StringComparison.Ordinal)) return false;
             IntPtr handle = GetStdHandle(-11);
             uint mode;
-            if (!GetConsoleMode(handle, out mode)) return; // Redirected output has no console to theme.
+            if (!GetConsoleMode(handle, out mode)) return false; // Redirected output has no console to theme.
             BufferInfo info = new BufferInfo();
             info.Size = (uint)Marshal.SizeOf(typeof(BufferInfo));
             Check(GetConsoleScreenBufferInfoEx(handle, ref info));
@@ -938,10 +1018,6 @@ namespace SimplyHost {
                 }
                 Check(WriteConsoleOutputAttribute(handle, cells, read, start, out written));
             }
-            // Start-menu launches can be delegated to Terminal without WT_SESSION.
-            // Its pseudoconsole has a hidden message window and cannot select the UI font.
-            IntPtr window = GetConsoleWindow();
-            if (window == IntPtr.Zero || !IsWindowVisible(window)) return;
             FontInfo font = new FontInfo();
             font.Size = (uint)Marshal.SizeOf(typeof(FontInfo));
             Check(GetCurrentConsoleFontEx(handle, false, ref font));
@@ -956,14 +1032,16 @@ namespace SimplyHost {
             Check(GetCurrentConsoleFontEx(handle, false, ref actual));
             if (!String.Equals(actual.Face, font.Face, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Classic console selected '" + actual.Face + "' instead of JetBrainsMono NFM. Reopen PowerShell after the font installation; if it remains unavailable, restart Windows.");
+            return true;
         }
     }
 }
 "@
         }
-        [SimplyHost.ConsoleAppearanceV2]::Apply()
-        $Host.UI.RawUI.BackgroundColor = [ConsoleColor]::DarkGray
-        $Host.UI.RawUI.ForegroundColor = [ConsoleColor]::Blue
+        if ([SimplyHost.ConsoleAppearanceV3]::Apply()) {
+            $Host.UI.RawUI.BackgroundColor = [ConsoleColor]::DarkGray
+            $Host.UI.RawUI.ForegroundColor = [ConsoleColor]::Blue
+        }
     } catch { Write-Warning ('SimplyHost console appearance: ' + $_.Exception.Message) }
 }
 '@
@@ -997,7 +1075,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.8 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.9 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'

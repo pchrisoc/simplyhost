@@ -477,7 +477,7 @@ $preset = @'
         "commandline": "powershell.exe -NoLogo",
         "startingDirectory": "%USERPROFILE%",
         "font": {
-          "face": "JetBrainsMono Nerd Font Mono",
+          "face": "JetBrainsMono NFM",
           "size": 15,
           "features": {
             "liga": 1
@@ -569,15 +569,6 @@ $preset = @'
             "foreground_templates": [
               "{{ if or (.Working.Changed) (.Staging.Changed) }}#B58900{{ end }}"
             ]
-          },
-          {
-            "type": "text",
-            "style": "plain",
-            "foreground": "#859900",
-            "foreground_templates": [
-              "{{ if gt .Code 0 }}#DC322F{{ end }}"
-            ],
-            "template": " >"
           }
         ]
       },
@@ -616,16 +607,12 @@ $preset = @'
         ]
       }
     ],
-    "transient_prompt": {
-      "foreground": "#839496",
-      "background": "transparent",
-      "template": "> "
-    },
     "secondary_prompt": {
       "foreground": "#586E75",
       "background": "transparent",
-      "template": "> "
-    }
+      "template": "... "
+    },
+    "terminal_background": "#002B36"
   }
 }
 '@ | ConvertFrom-Json
@@ -723,6 +710,45 @@ function Set-SimplyHostJsonProperty {
     $quotedName = ConvertTo-Json -InputObject $Name -Compress
     return $Content.Insert($ObjectStart + 1, "`r`n$quotedName`: $ValueJson$comma`r`n")
 }
+function Set-SimplyHostActiveProfileAppearance {
+    param([string]$Content, [object]$ManagedProfile)
+    $activeId = [Environment]::GetEnvironmentVariable('WT_PROFILE_ID')
+    $activeGuid = [guid]::Empty
+    if (-not [guid]::TryParse($activeId, [ref]$activeGuid)) { return $Content }
+    if ($activeGuid -eq [guid]$ManagedProfile.guid) { return $Content }
+    $tokens = @(Get-SimplyHostJsonTokens -Content $Content)
+    $profiles = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $tokens[0].Index -Name 'profiles'
+    $list = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $profiles.Start -Name 'list'
+    $activeStart = -1
+    $depth = 0
+    for ($index = $list.TokenIndex; $index -le $list.TokenEnd; $index++) {
+        $token = $tokens[$index]
+        if ($depth -eq 1 -and $token.Value -eq '{') {
+            $property = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $token.Index -Name 'guid'
+            if ($null -ne $property) {
+                $value = ConvertFrom-Json -InputObject ('{"value":' + $Content.Substring($property.Start, $property.End - $property.Start) + '}')
+                $candidate = [guid]::Empty
+                if ([guid]::TryParse([string]$value.value, [ref]$candidate) -and $candidate -eq $activeGuid) { $activeStart = $token.Index; break }
+            }
+        }
+        if ($token.Value -eq '{' -or $token.Value -eq '[') { $depth++ }
+        if ($token.Value -eq '}' -or $token.Value -eq ']') { $depth-- }
+    }
+    $fields = @('font','colorScheme','background','foreground','cursorColor','opacity','useAcrylic')
+    if ($activeStart -ge 0) {
+        foreach ($name in $fields) {
+            $Content = Set-SimplyHostJsonProperty -Content $Content -ObjectStart $activeStart -Name $name -ValueJson (ConvertTo-Json -InputObject $ManagedProfile.$name -Depth 10 -Compress)
+        }
+    } else {
+        # A built-in/dynamic profile may not yet have an explicit user-settings entry.
+        $override = [ordered]@{ guid = '{' + $activeGuid.ToString() + '}' }
+        foreach ($name in $fields) { $override[$name] = $ManagedProfile.$name }
+        $json = ConvertTo-Json -InputObject $override -Depth 20 -Compress
+        $Content = $Content.Insert($list.Start + 1, "`r`n$json,`r`n")
+    }
+    return $Content
+}
+
 function Set-SimplyHostTerminalSettings {
     param([object]$ManagedProfile, [switch]$KeepDefault)
     $paths = @(
@@ -792,7 +818,8 @@ function Set-SimplyHostTerminalSettings {
                 }
             }
         }
-        if ($PSCmdlet.ShouldProcess($path, 'Apply the SimplyHost font/colors and Terminal default profile')) { Write-SimplyHostFile -Path $path -Content $content }
+        $content = Set-SimplyHostActiveProfileAppearance -Content $content -ManagedProfile $ManagedProfile
+        if ($PSCmdlet.ShouldProcess($path, 'Apply Solarized Dark and the Nerd Font to SimplyHost and the active Terminal profile')) { Write-SimplyHostFile -Path $path -Content $content }
     }
     if (-not $found) { Write-Warning 'Open Windows Terminal once and rerun, then select SimplyHost PowerShell in its profile menu.' }
 }
@@ -807,7 +834,7 @@ function Test-SimplyHostNerdFont {
             if ($null -eq $key) { continue }
             # Read registry value names directly; avoid PowerShell's adapted property collections.
             foreach ($fontName in $key.GetValueNames()) {
-                if ($fontName -match 'JetBrainsMono.*Nerd Font Mono') { return $true }
+                if ($fontName -match 'JetBrainsMono(?:\s*NFM|\s*Nerd\s*Font\s*Mono)') { return $true }
             }
         } catch [System.UnauthorizedAccessException] {
             Write-Warning 'Could not read a font registry key; checking the remaining font locations.'
@@ -842,7 +869,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.3 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.4 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -873,7 +900,7 @@ if (-not $SkipPrompt) {
         $fontPresent = Test-SimplyHostNerdFont
         if (-not $fontPresent -and $PSCmdlet.ShouldProcess('JetBrains Mono Nerd Font', 'Install the font required for powerline icons')) {
             & $poshCommand font install 'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip'
-            if ($LASTEXITCODE -ne 0) { throw 'Font installation failed. Install JetBrainsMono Nerd Font Mono, then rerun (or use -SkipFontInstall if already installed).' }
+            if ($LASTEXITCODE -ne 0) { throw 'Font installation failed. Install JetBrainsMono NFM, then rerun (or use -SkipFontInstall if already installed).' }
         }
     }
     $themePath = Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json'
@@ -899,7 +926,8 @@ if ($simplyHostPosh) {
 }
 Set-SimplyHostTerminalSettings -ManagedProfile $terminalProfile -KeepDefault:$KeepDefaultProfile
 Write-Host 'Close and reopen Windows Terminal to load the font, Solarized Dark profile, and powerline prompt.'
-Write-Host 'Current tabs keep their original font. Open the themed profile: wt -p "SimplyHost PowerShell"'
+Write-Host 'Font: JetBrainsMono NFM. Colors: background #002B36, text #839496. The active Terminal profile is also updated when WT_PROFILE_ID is available.'
+Write-Host 'Open the themed profile: wt -p "SimplyHost PowerShell"'
 
 if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShell profile for repeat use?')) {
     if (-not $scriptSource -or -not (Test-Path -LiteralPath $scriptSource)) {

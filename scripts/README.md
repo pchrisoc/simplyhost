@@ -86,13 +86,13 @@ bash scripts/iterm2.sh --apply-globals
 
 The script refuses to write global preferences while iTerm2 is running, because its cached preferences can overwrite them. It first saves the full target machine's current preferences privately in `~/.local/share/simplyhost/terminal-backups/`. Only the captured appearance keys are changed: scrollbar visibility, pane titles/dimming, borders, tab position/style/width/close buttons, and status-bar arrangement. Restart iTerm2 afterward. To restore a full preferences backup, quit iTerm2 and run `defaults import com.googlecode.iterm2 BACKUP.plist` from Terminal.app.
 
-Install **JetBrainsMono Nerd Font Mono** separately if it is missing, using the [Nerd Fonts download page](https://www.nerdfonts.com/font-downloads). The profile's internal macOS font name is `JetBrainsMonoNFM-Regular`. Font binaries are not bundled.
+Install **JetBrainsMono NFM** separately if it is missing, using the [Nerd Fonts download page](https://www.nerdfonts.com/font-downloads). The profile's internal macOS font name is `JetBrainsMonoNFM-Regular`. Font binaries are not bundled.
 
 The installer offers an optional `sh-iterm2` repeat command in `~/.bashrc`. If you use the Zsh profile, run the installer directly or define the equivalent function in `.zshrc`; `.bashrc` is only read by Bash.
 
 ### Windows Terminal / PowerShell
 
-The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: one prompt line with an OS icon, directory and Git segments, and right-aligned command status/duration. Commands are entered immediately after the path/Git segments. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
+The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: one prompt line with an OS icon, directory and Git segments, and right-aligned command status/duration. Commands are entered immediately after the path/Git segments; there is no extra green arrow marker. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
 
 Run from a local checkout, or download into your temporary directory:
 
@@ -104,13 +104,13 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/pchrisoc/simplyhost/mai
 
 The installer:
 
-- Adds **SimplyHost PowerShell** using a Windows Terminal fragment, with JetBrainsMono Nerd Font Mono at 15 pt and the standard Solarized Dark palette.
+- Adds **SimplyHost PowerShell** using a Windows Terminal fragment, with JetBrainsMono NFM at 15 pt and the standard Solarized Dark palette.
 - Installs Oh My Posh through `winget` when missing, then installs the required Nerd Font through Oh My Posh if not already present. These downloads use the official package and font sources.
 - Saves the powerline theme under `%LOCALAPPDATA%\SimplyHost\themes\solarized-dark.omp.json` and replaces the marked SimplyHost prompt block in `$PROFILE.CurrentUserAllHosts` with Oh My Posh initialization.
-- Makes the themed profile the default in existing stable, preview, or unpackaged Windows Terminal settings. It also writes the font and colors explicitly on the SimplyHost profile so fragment/default font settings cannot leave its icons in an unsupported font. Comments, trailing commas, other profiles, and unrelated settings are preserved. Backups are stored outside the Terminal configuration folders.
+- Makes the themed profile the default in existing stable, preview, or unpackaged Windows Terminal settings. It writes the actual Windows font family `JetBrainsMono NFM` and Solarized background/text colors explicitly on the SimplyHost profile. When `WT_PROFILE_ID` identifies the active tab, its profile gets the same appearance while its shell/name and unrelated settings are preserved. Comments, trailing commas, profiles other than SimplyHost/the active profile, and unrelated settings are preserved. Backups are stored outside the Terminal configuration folders.
 - Optionally adds `sh-terminal` for repeat use. `-AddCommand` enables it explicitly; otherwise an interactive prompt offers it.
 
-Close all Windows Terminal windows and reopen it to load the installed font. Existing tabs retain their original Terminal profile even if you source a new PowerShell prompt. Open the themed profile explicitly:
+Close all Windows Terminal windows and reopen it to load the installed font. The installer also updates the active profile when Windows Terminal supplies `WT_PROFILE_ID`; sourcing the PowerShell prompt alone does not apply Terminal appearance settings. Open the themed profile explicitly:
 
 ```powershell
 wt -p "SimplyHost PowerShell"

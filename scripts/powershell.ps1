@@ -523,7 +523,7 @@ $preset = @'
   },
   "notes": {
     "color_conversion": "Windows uses the standard Solarized Dark 16-color RGB palette. The macOS snapshot preserves the original iTerm2 colors.",
-    "shell": "PowerShell uses an Oh My Posh configuration with a Powerlevel10k-style two-line powerline prompt and Solarized Dark colors."
+    "shell": "PowerShell uses an Oh My Posh single-line powerline prompt with Solarized Dark colors."
   },
   "oh_my_posh": {
     "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
@@ -535,12 +535,6 @@ $preset = @'
         "type": "prompt",
         "alignment": "left",
         "segments": [
-          {
-            "type": "text",
-            "style": "plain",
-            "foreground": "#586E75",
-            "template": "\u256d\u2500"
-          },
           {
             "type": "os",
             "style": "diamond",
@@ -575,6 +569,15 @@ $preset = @'
             "foreground_templates": [
               "{{ if or (.Working.Changed) (.Staging.Changed) }}#B58900{{ end }}"
             ]
+          },
+          {
+            "type": "text",
+            "style": "plain",
+            "foreground": "#859900",
+            "foreground_templates": [
+              "{{ if gt .Code 0 }}#DC322F{{ end }}"
+            ],
+            "template": " >"
           }
         ]
       },
@@ -609,34 +612,6 @@ $preset = @'
               "style": "austin"
             },
             "invert_powerline": true
-          },
-          {
-            "type": "text",
-            "style": "plain",
-            "foreground": "#586E75",
-            "template": "\u2500\u256e"
-          }
-        ]
-      },
-      {
-        "type": "prompt",
-        "alignment": "left",
-        "newline": true,
-        "segments": [
-          {
-            "type": "text",
-            "style": "plain",
-            "foreground": "#586E75",
-            "template": "\u2570\u2500"
-          },
-          {
-            "type": "text",
-            "style": "plain",
-            "foreground": "#859900",
-            "foreground_templates": [
-              "{{ if gt .Code 0 }}#DC322F{{ end }}"
-            ],
-            "template": "\u276f"
           }
         ]
       }
@@ -644,12 +619,12 @@ $preset = @'
     "transient_prompt": {
       "foreground": "#839496",
       "background": "transparent",
-      "template": "\u276f "
+      "template": "> "
     },
     "secondary_prompt": {
       "foreground": "#586E75",
       "background": "transparent",
-      "template": "\u2570\u2500 "
+      "template": "> "
     }
   }
 }
@@ -705,66 +680,121 @@ function Set-SimplyHostProfileBlock {
     }
     Write-SimplyHostFile -Path $path -Content $content
 }
-function Set-SimplyHostTerminalDefault {
-    param([string]$Guid)
+# JSONC token positions let us preserve comments and unrelated Terminal settings.
+function Get-SimplyHostJsonTokens {
+    param([string]$Content)
+    $pattern = '(?s)"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*.*?\*/|[{}\[\]:,]|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b'
+    return @([regex]::Matches($Content, $pattern) | Where-Object { -not $_.Value.StartsWith('/') })
+}
+function Find-SimplyHostJsonProperty {
+    param([object[]]$Tokens, [int]$ObjectStart, [string]$Name)
+    $depth = 0
+    $quotedName = ConvertTo-Json -InputObject $Name -Compress
+    for ($index = 0; $index -lt $Tokens.Count; $index++) {
+        $token = $Tokens[$index]
+        if ($token.Index -lt $ObjectStart) { continue }
+        if ($depth -eq 1 -and $token.Value -ceq $quotedName -and $index + 2 -lt $Tokens.Count -and $Tokens[$index + 1].Value -eq ':') {
+            $start = $index + 2
+            $end = $start
+            if ($Tokens[$start].Value -eq '{' -or $Tokens[$start].Value -eq '[') {
+                $valueDepth = 0
+                for ($end = $start; $end -lt $Tokens.Count; $end++) {
+                    if ($Tokens[$end].Value -eq '{' -or $Tokens[$end].Value -eq '[') { $valueDepth++ }
+                    if ($Tokens[$end].Value -eq '}' -or $Tokens[$end].Value -eq ']') { $valueDepth-- }
+                    if ($valueDepth -eq 0) { break }
+                }
+            }
+            return [PSCustomObject]@{ Start = $Tokens[$start].Index; End = $Tokens[$end].Index + $Tokens[$end].Length; TokenIndex = $start; TokenEnd = $end }
+        }
+        if ($token.Value -eq '{' -or $token.Value -eq '[') { $depth++ }
+        if ($token.Value -eq '}' -or $token.Value -eq ']') { $depth-- }
+        if ($depth -eq 0) { break }
+    }
+    return $null
+}
+function Set-SimplyHostJsonProperty {
+    param([string]$Content, [int]$ObjectStart, [string]$Name, [string]$ValueJson)
+    $tokens = @(Get-SimplyHostJsonTokens -Content $Content)
+    $property = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $ObjectStart -Name $Name
+    if ($null -ne $property) { return $Content.Remove($property.Start, $property.End - $property.Start).Insert($property.Start, $ValueJson) }
+    $following = @($tokens | Where-Object { $_.Index -gt $ObjectStart })
+    $comma = ','
+    if ($following[0].Value -eq '}') { $comma = '' }
+    $quotedName = ConvertTo-Json -InputObject $Name -Compress
+    return $Content.Insert($ObjectStart + 1, "`r`n$quotedName`: $ValueJson$comma`r`n")
+}
+function Set-SimplyHostTerminalSettings {
+    param([object]$ManagedProfile, [switch]$KeepDefault)
     $paths = @(
         (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'),
         (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json'),
         (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\settings.json')
     )
-    # Preserve JSON-with-comments and formatting; change only the root defaultProfile value.
-    $tokenPattern = '(?s)"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*.*?\*/|[{}\[\]:,]'
+    $pattern = '(?s)"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*.*?\*/|[{}\[\]:,]'
     $found = $false
     foreach ($path in $paths) {
         if (-not (Test-Path -LiteralPath $path)) { continue }
         $found = $true
         $content = [IO.File]::ReadAllText($path)
-        $matches = [regex]::Matches($content, $tokenPattern)
-        $tokens = @($matches | Where-Object { -not $_.Value.StartsWith('/') })
-        if ($tokens.Count -lt 2 -or $tokens[0].Value -ne '{' -or $tokens[-1].Value -ne '}') {
-            throw "Windows Terminal settings are not a JSON object: $path"
-        }
-        # Validate a temporary JSON representation before editing; do not rewrite users' comments.
-        $clean = [regex]::Replace($content, $tokenPattern, [System.Text.RegularExpressions.MatchEvaluator]{
+        $tokens = @(Get-SimplyHostJsonTokens -Content $content)
+        if ($tokens.Count -lt 2 -or $tokens[0].Value -ne '{' -or $tokens[-1].Value -ne '}') { throw "Windows Terminal settings are not a JSON object: $path" }
+        # Validate without comments/trailing commas, but preserve the original text for edits.
+        $clean = [regex]::Replace($content, $pattern, [System.Text.RegularExpressions.MatchEvaluator]{
             param($match)
             if ($match.Value.StartsWith('/')) { return [regex]::Replace($match.Value, '[^\r\n]', ' ') }
             return $match.Value
         })
         for ($index = $tokens.Count - 2; $index -ge 0; $index--) {
-            if ($tokens[$index].Value -eq ',' -and $tokens[$index + 1].Value -match '^[}\]]$') {
-                $clean = $clean.Remove($tokens[$index].Index, 1).Insert($tokens[$index].Index, ' ')
-            }
+            if ($tokens[$index].Value -eq ',' -and $tokens[$index + 1].Value -match '^[}\]]$') { $clean = $clean.Remove($tokens[$index].Index, 1).Insert($tokens[$index].Index, ' ') }
         }
         $null = ConvertFrom-Json -InputObject $clean
-        $depth = 0
-        $values = @()
-        for ($index = 0; $index -lt $tokens.Count; $index++) {
-            $token = $tokens[$index]
-            if ($depth -eq 1 -and $token.Value -ceq '"defaultProfile"' -and $index + 2 -lt $tokens.Count -and $tokens[$index + 1].Value -eq ':') {
-                $value = $tokens[$index + 2]
-                if (-not $value.Value.StartsWith('"')) { throw "Invalid defaultProfile value in $path" }
-                $values += $value
-            }
-            if ($token.Value -eq '{' -or $token.Value -eq '[') { $depth++ }
-            if ($token.Value -eq '}' -or $token.Value -eq ']') { $depth-- }
+        $root = $tokens[0].Index
+        if (-not $KeepDefault) {
+            $content = Set-SimplyHostJsonProperty -Content $content -ObjectStart $root -Name 'defaultProfile' -ValueJson (ConvertTo-Json -InputObject $ManagedProfile.guid -Compress)
         }
-        $quotedGuid = ConvertTo-Json -InputObject $Guid -Compress
-        if ($values.Count -gt 0) {
-            foreach ($value in ($values | Sort-Object Index -Descending)) {
-                $content = $content.Remove($value.Index, $value.Length).Insert($value.Index, $quotedGuid)
-            }
+        $profileJson = ConvertTo-Json -InputObject $ManagedProfile -Depth 20 -Compress
+        $tokens = @(Get-SimplyHostJsonTokens -Content $content)
+        $profiles = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $root -Name 'profiles'
+        if ($null -eq $profiles) {
+            $content = Set-SimplyHostJsonProperty -Content $content -ObjectStart $root -Name 'profiles' -ValueJson ('{"list":[' + $profileJson + ']}')
         } else {
-            $comma = ','
-            if ($tokens[1].Value -eq '}') { $comma = '' }
-            $content = $content.Insert($tokens[0].Index + 1, "`r`n    `"defaultProfile`": $quotedGuid$comma`r`n")
+            if ($tokens[$profiles.TokenIndex].Value -ne '{') { throw "Expected profiles to be an object in $path" }
+            $list = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $profiles.Start -Name 'list'
+            if ($null -eq $list) {
+                $content = Set-SimplyHostJsonProperty -Content $content -ObjectStart $profiles.Start -Name 'list' -ValueJson ('[' + $profileJson + ']')
+            } else {
+                if ($tokens[$list.TokenIndex].Value -ne '[') { throw "Expected profiles.list to be an array in $path" }
+                $managedStart = -1
+                $arrayDepth = 0
+                for ($index = $list.TokenIndex; $index -le $list.TokenEnd; $index++) {
+                    $token = $tokens[$index]
+                    if ($arrayDepth -eq 1 -and $token.Value -eq '{') {
+                        $guidProperty = Find-SimplyHostJsonProperty -Tokens $tokens -ObjectStart $token.Index -Name 'guid'
+                        if ($null -ne $guidProperty) {
+                            $guid = ConvertFrom-Json -InputObject ('{"value":' + $content.Substring($guidProperty.Start, $guidProperty.End - $guidProperty.Start) + '}')
+                            if ($guid.value -eq $ManagedProfile.guid) { $managedStart = $token.Index; break }
+                        }
+                    }
+                    if ($token.Value -eq '{' -or $token.Value -eq '[') { $arrayDepth++ }
+                    if ($token.Value -eq '}' -or $token.Value -eq ']') { $arrayDepth-- }
+                }
+                if ($managedStart -ge 0) {
+                    # Explicit user-profile settings outrank fragments and defaults. Set our own profile's
+                    # font/colors here, preserving unrelated profiles and custom fields on this profile.
+                    foreach ($name in @('font','colorScheme','background','foreground','cursorColor','opacity','useAcrylic')) {
+                        $valueJson = ConvertTo-Json -InputObject $ManagedProfile.$name -Depth 10 -Compress
+                        $content = Set-SimplyHostJsonProperty -Content $content -ObjectStart $managedStart -Name $name -ValueJson $valueJson
+                    }
+                } else {
+                    $comma = ','
+                    if ($tokens[$list.TokenIndex + 1].Value -eq ']') { $comma = '' }
+                    $content = $content.Insert($list.Start + 1, "`r`n$profileJson$comma`r`n")
+                }
+            }
         }
-        if ($PSCmdlet.ShouldProcess($path, 'Make SimplyHost PowerShell the default Windows Terminal profile')) {
-            Write-SimplyHostFile -Path $path -Content $content
-        }
+        if ($PSCmdlet.ShouldProcess($path, 'Apply the SimplyHost font/colors and Terminal default profile')) { Write-SimplyHostFile -Path $path -Content $content }
     }
-    if (-not $found) {
-        Write-Warning 'No Windows Terminal settings file found. Open Terminal once and rerun, or select SimplyHost PowerShell in Settings > Startup > Default profile.'
-    }
+    if (-not $found) { Write-Warning 'Open Windows Terminal once and rerun, then select SimplyHost PowerShell in its profile menu.' }
 }
 
 function Test-SimplyHostNerdFont {
@@ -812,7 +842,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.2 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.3 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -858,14 +888,18 @@ if (-not $simplyHostPosh) {
     if (Test-Path -LiteralPath $simplyHostPoshPath) { $simplyHostPosh = (Get-Item -LiteralPath $simplyHostPoshPath).FullName }
 }
 if ($simplyHostPosh) {
-    & $simplyHostPosh init pwsh --config (Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json') | Invoke-Expression
+    $simplyHostPreviousEncoding = [Console]::OutputEncoding
+    try {
+        [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+        & $simplyHostPosh init pwsh --config (Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json') | Invoke-Expression
+    } finally { [Console]::OutputEncoding = $simplyHostPreviousEncoding }
 } else { Write-Warning 'SimplyHost prompt needs Oh My Posh. Rerun the terminal installer.' }
 '@
     }
 }
-if (-not $KeepDefaultProfile) { Set-SimplyHostTerminalDefault -Guid $terminalProfile.guid }
+Set-SimplyHostTerminalSettings -ManagedProfile $terminalProfile -KeepDefault:$KeepDefaultProfile
 Write-Host 'Close and reopen Windows Terminal to load the font, Solarized Dark profile, and powerline prompt.'
-Write-Host 'To open the themed profile directly: wt -p "SimplyHost PowerShell"'
+Write-Host 'Current tabs keep their original font. Open the themed profile: wt -p "SimplyHost PowerShell"'
 
 if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShell profile for repeat use?')) {
     if (-not $scriptSource -or -not (Test-Path -LiteralPath $scriptSource)) {

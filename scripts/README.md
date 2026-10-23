@@ -92,7 +92,7 @@ The installer offers an optional `sh-iterm2` repeat command in `~/.bashrc`. If y
 
 ### Windows Terminal / PowerShell
 
-The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: two framed prompt lines, an OS icon, directory and Git segments, and right-aligned command status/duration. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
+The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: one prompt line with an OS icon, directory and Git segments, and right-aligned command status/duration. Commands are entered immediately after the path/Git segments. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
 
 Run from a local checkout, or download into your temporary directory:
 
@@ -107,16 +107,16 @@ The installer:
 - Adds **SimplyHost PowerShell** using a Windows Terminal fragment, with JetBrainsMono Nerd Font Mono at 15 pt and the standard Solarized Dark palette.
 - Installs Oh My Posh through `winget` when missing, then installs the required Nerd Font through Oh My Posh if not already present. These downloads use the official package and font sources.
 - Saves the powerline theme under `%LOCALAPPDATA%\SimplyHost\themes\solarized-dark.omp.json` and replaces the marked SimplyHost prompt block in `$PROFILE.CurrentUserAllHosts` with Oh My Posh initialization.
-- Makes the themed profile the default in existing stable, preview, or unpackaged Windows Terminal settings. Only the root `defaultProfile` value changes; comments, trailing commas, and unrelated settings are preserved. Backups are stored outside the Terminal configuration folders.
+- Makes the themed profile the default in existing stable, preview, or unpackaged Windows Terminal settings. It also writes the font and colors explicitly on the SimplyHost profile so fragment/default font settings cannot leave its icons in an unsupported font. Comments, trailing commas, other profiles, and unrelated settings are preserved. Backups are stored outside the Terminal configuration folders.
 - Optionally adds `sh-terminal` for repeat use. `-AddCommand` enables it explicitly; otherwise an interactive prompt offers it.
 
-Close and reopen Windows Terminal to load the new default profile and installed font. To open it explicitly:
+Close all Windows Terminal windows and reopen it to load the installed font. Existing tabs retain their original Terminal profile even if you source a new PowerShell prompt. Open the themed profile explicitly:
 
 ```powershell
 wt -p "SimplyHost PowerShell"
 ```
 
-The new Terminal profile uses the same PowerShell version that ran the installer. Windows PowerShell and PowerShell 7 use separate shell profiles; rerun in each version if you use both. Git is optional and its segment appears only inside a repository. Oh My Posh is the Windows prompt engine; it recreates this Powerlevel10k-style layout without installing Zsh.
+The new Terminal profile uses the same PowerShell version that ran the installer. Prompt initialization temporarily uses UTF-8 to avoid corrupting icon characters. Windows PowerShell and PowerShell 7 use separate shell profiles; rerun in each version if you use both. Git is optional and its segment appears only inside a repository. Oh My Posh is the Windows prompt engine; it recreates this Powerlevel10k-style layout without installing Zsh.
 
 Windows Terminal, PowerShell 5.1+, and `winget` are required when installing missing dependencies. If Oh My Posh is already installed, `winget` is not needed. The script does not change execution policy. If no Terminal settings file exists yet, open Terminal once and rerun, or choose **SimplyHost PowerShell** in Settings > Startup > Default profile.
 

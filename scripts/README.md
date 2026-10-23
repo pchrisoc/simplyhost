@@ -92,7 +92,7 @@ The installer offers an optional `sh-iterm2` repeat command in `~/.bashrc`. If y
 
 ### Windows Terminal / PowerShell
 
-The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: one prompt line with an OS icon, directory and Git segments, and right-aligned command status/duration. Commands are entered immediately after the path/Git segments; there is no extra green arrow marker. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
+The installer uses **Solarized Dark** and an [Oh My Posh](https://ohmyposh.dev/docs/installation/windows) theme based on the captured Powerlevel10k layout: one prompt line with an OS icon, directory and Git segments, with command duration and failure status on the same line. No right-edge cursor positioning is used. Commands are entered immediately after the path/Git segments; there is no extra green arrow marker. It replaces the earlier basic SimplyHost prompt. The terminal background stays `#002B36` in both light and dark Windows modes.
 
 Run from a local checkout, or download into your temporary directory:
 
@@ -110,13 +110,13 @@ The installer:
 - Makes the themed profile the default in existing stable, preview, or unpackaged Windows Terminal settings. It writes the actual Windows font family `JetBrainsMono NFM` and Solarized background/text colors explicitly on the SimplyHost profile. When `WT_PROFILE_ID` identifies the active tab, its profile gets the same appearance while its shell/name and unrelated settings are preserved. Comments, trailing commas, profiles other than SimplyHost/the active profile, and unrelated settings are preserved. Backups are stored outside the Terminal configuration folders.
 - Optionally adds `sh-terminal` for repeat use. `-AddCommand` enables it explicitly; otherwise an interactive prompt offers it.
 
-Close all Windows Terminal windows and reopen it to load the installed font. The installer also updates the active profile when Windows Terminal supplies `WT_PROFILE_ID`; sourcing the PowerShell prompt alone does not apply Terminal appearance settings. Open the themed profile explicitly:
+The installer opens a new Windows Terminal window directly in the themed profile. Use that new window rather than sourcing `$PROFILE` in the old tab. If Windows Terminal was running before the font was installed and still retains the old font, close all Terminal windows once and reopen it. The installer also updates the active profile when Windows Terminal supplies `WT_PROFILE_ID`; sourcing the PowerShell prompt alone does not apply Terminal appearance settings. Open the themed profile explicitly:
 
 ```powershell
 wt -p "SimplyHost PowerShell"
 ```
 
-The new Terminal profile uses the same PowerShell version that ran the installer. Prompt initialization temporarily uses UTF-8 to avoid corrupting icon characters. Windows PowerShell and PowerShell 7 use separate shell profiles; rerun in each version if you use both. Git is optional and its segment appears only inside a repository. Oh My Posh is the Windows prompt engine; it recreates this Powerlevel10k-style layout without installing Zsh.
+The new Terminal profile uses the same PowerShell version that ran the installer. Prompt initialization uses UTF-8 evaluation and unloads the previous Oh My Posh module when re-sourced, so cached scripts and old prompt line counts are replaced. Windows PowerShell and PowerShell 7 use separate shell profiles; rerun in each version if you use both. Git is optional and its segment appears only inside a repository. Oh My Posh is the Windows prompt engine; it recreates this Powerlevel10k-style layout without installing Zsh.
 
 Windows Terminal, PowerShell 5.1+, and `winget` are required when installing missing dependencies. If Oh My Posh is already installed, `winget` is not needed. The script does not change execution policy. If no Terminal settings file exists yet, open Terminal once and rerun, or choose **SimplyHost PowerShell** in Settings > Startup > Default profile.
 
@@ -126,6 +126,7 @@ Options:
 .\scripts\powershell.ps1 -KeepDefaultProfile  # Preserve your current default Terminal profile
 .\scripts\powershell.ps1 -SkipFontInstall    # You manage the required font yourself
 .\scripts\powershell.ps1 -SkipPrompt         # Install only the Terminal appearance
+.\scripts\powershell.ps1 -NoLaunch           # Configure without opening a new Terminal window
 .\scripts\powershell.ps1 -WhatIf             # Preview changes
 .\scripts\powershell.ps1 -ExportPath .\terminal-preview
 ```

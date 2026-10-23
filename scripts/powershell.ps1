@@ -8,12 +8,13 @@ param(
     [switch]$SkipPrompt,
     [switch]$SkipFontInstall,
     [switch]$KeepDefaultProfile,
+    [switch]$NoLaunch,
     [switch]$Help
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($Help) {
-    Write-Output 'Usage: .\powershell.ps1 [-ExportPath NEW_DIRECTORY] [-InstallPrompt] [-AddCommand] [-NoPrompt] [-SkipPrompt] [-SkipFontInstall] [-KeepDefaultProfile] [-WhatIf]'
+    Write-Output 'Usage: .\powershell.ps1 [-ExportPath NEW_DIRECTORY] [-InstallPrompt] [-AddCommand] [-NoPrompt] [-SkipPrompt] [-SkipFontInstall] [-KeepDefaultProfile] [-NoLaunch] [-WhatIf]'
     Write-Output 'Installs a Solarized Dark Windows Terminal profile, a Powerlevel10k-style Oh My Posh prompt, and JetBrains Mono Nerd Font. Makes the themed profile the default unless -KeepDefaultProfile is set.'
     return
 }
@@ -569,24 +570,17 @@ $preset = @'
             "foreground_templates": [
               "{{ if or (.Working.Changed) (.Staging.Changed) }}#B58900{{ end }}"
             ]
-          }
-        ]
-      },
-      {
-        "type": "prompt",
-        "alignment": "right",
-        "segments": [
+          },
           {
             "type": "status",
             "style": "powerline",
-            "powerline_symbol": "\ue0b2",
-            "foreground": "#859900",
+            "powerline_symbol": "\ue0b0",
+            "foreground": "#DC322F",
             "background": "#444444",
             "template": " {{ if eq .Code 0 }}\uf00c{{ else }}\uf00d {{ .Code }}{{ end }} ",
             "options": {
-              "always_enabled": true
+              "always_enabled": false
             },
-            "invert_powerline": true,
             "foreground_templates": [
               "{{ if gt .Code 0 }}#DC322F{{ end }}"
             ]
@@ -594,15 +588,14 @@ $preset = @'
           {
             "type": "executiontime",
             "style": "powerline",
-            "powerline_symbol": "\ue0b2",
+            "powerline_symbol": "\ue0b0",
             "foreground": "#B58900",
             "background": "#444444",
             "template": " {{ .FormattedMs }} ",
             "options": {
               "threshold": 3000,
               "style": "austin"
-            },
-            "invert_powerline": true
+            }
           }
         ]
       }
@@ -869,7 +862,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.4 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.5 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -915,17 +908,19 @@ if (-not $simplyHostPosh) {
     if (Test-Path -LiteralPath $simplyHostPoshPath) { $simplyHostPosh = (Get-Item -LiteralPath $simplyHostPoshPath).FullName }
 }
 if ($simplyHostPosh) {
+    # Reloading a profile must replace the cached Oh My Posh module and its line-count state.
+    if (Get-Module -Name oh-my-posh-core) { Remove-Module -Name oh-my-posh-core -Force }
     $simplyHostPreviousEncoding = [Console]::OutputEncoding
     try {
         [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
-        & $simplyHostPosh init pwsh --config (Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json') | Invoke-Expression
+        & $simplyHostPosh init pwsh --eval --config (Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json') | Invoke-Expression
     } finally { [Console]::OutputEncoding = $simplyHostPreviousEncoding }
 } else { Write-Warning 'SimplyHost prompt needs Oh My Posh. Rerun the terminal installer.' }
 '@
     }
 }
 Set-SimplyHostTerminalSettings -ManagedProfile $terminalProfile -KeepDefault:$KeepDefaultProfile
-Write-Host 'Close and reopen Windows Terminal to load the font, Solarized Dark profile, and powerline prompt.'
+Write-Host 'Appearance settings saved for SimplyHost PowerShell. Existing tabs may retain their old rendering state.'
 Write-Host 'Font: JetBrainsMono NFM. Colors: background #002B36, text #839496. The active Terminal profile is also updated when WT_PROFILE_ID is available.'
 Write-Host 'Open the themed profile: wt -p "SimplyHost PowerShell"'
 
@@ -940,4 +935,15 @@ if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShel
         Set-SimplyHostProfileBlock -Name 'command' -Body ("function global:sh-terminal { & '" + $quotedPath + "' @args }")
     }
 }
-Write-Host 'Start a new PowerShell session to load profile changes, or run: . $PROFILE.CurrentUserAllHosts'
+if (-not $NoLaunch) {
+    if (Get-Command wt.exe -ErrorAction SilentlyContinue) {
+        if ($PSCmdlet.ShouldProcess('Windows Terminal', 'Open a fresh SimplyHost PowerShell window with the installed font and colors')) {
+            Start-Process -FilePath 'wt.exe' -ArgumentList @('-w', 'new', 'new-tab', '-p', $terminalProfile.guid)
+            Write-Host 'Setup complete. Use the NEW SimplyHost PowerShell window; the old tab may retain its old appearance.'
+        }
+    } else {
+        Write-Warning 'Windows Terminal (wt.exe) was not found on PATH. Open Windows Terminal and select SimplyHost PowerShell.'
+    }
+} else {
+    Write-Host 'Setup complete. Open Windows Terminal and select SimplyHost PowerShell to load the new appearance.'
+}

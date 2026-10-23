@@ -568,7 +568,9 @@ function Write-SimplyHostFile {
     try {
         [IO.File]::WriteAllText($temporary, $Content, $utf8)
         if (Test-Path -LiteralPath $Path) {
-            [IO.File]::Replace($temporary, $Path, $null)
+            # A bare $null can become an empty string when bound to this .NET string parameter.
+            # Backups were saved above; explicitly pass a null string for the optional backup path.
+            [IO.File]::Replace($temporary, $Path, [System.Management.Automation.Language.NullString]::Value)
         } else {
             [IO.File]::Move($temporary, $Path)
         }

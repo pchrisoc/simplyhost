@@ -5,13 +5,16 @@ param(
     [switch]$InstallPrompt,
     [switch]$AddCommand,
     [switch]$NoPrompt,
+    [switch]$SkipPrompt,
+    [switch]$SkipFontInstall,
+    [switch]$KeepDefaultProfile,
     [switch]$Help
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($Help) {
-    Write-Output 'Usage: .\powershell.ps1 [-ExportPath NEW_DIRECTORY] [-InstallPrompt] [-AddCommand] [-NoPrompt] [-WhatIf]'
-    Write-Output 'Adds a Windows Terminal profile matching the captured iTerm2 appearance; optionally configures your PowerShell prompt and a repeat command.'
+    Write-Output 'Usage: .\powershell.ps1 [-ExportPath NEW_DIRECTORY] [-InstallPrompt] [-AddCommand] [-NoPrompt] [-SkipPrompt] [-SkipFontInstall] [-KeepDefaultProfile] [-WhatIf]'
+    Write-Output 'Installs a Solarized Dark Windows Terminal profile, a Powerlevel10k-style Oh My Posh prompt, and JetBrains Mono Nerd Font. Makes the themed profile the default unless -KeepDefaultProfile is set.'
     return
 }
 $preset = @'
@@ -480,43 +483,20 @@ $preset = @'
             "liga": 1
           }
         },
-        "colorScheme": {
-          "light": "SimplyHost iTerm2 Light",
-          "dark": "SimplyHost iTerm2 Dark"
-        },
+        "colorScheme": "SimplyHost Solarized Dark",
         "opacity": 100,
         "useAcrylic": false,
         "historySize": 1000,
         "scrollbarState": "hidden",
-        "intenseTextStyle": "all"
+        "intenseTextStyle": "all",
+        "background": "#002B36",
+        "foreground": "#839496",
+        "cursorColor": "#93A1A1",
+        "cursorShape": "filledBox"
       }
     ],
     "schemes": [
       {
-        "name": "SimplyHost iTerm2 Light",
-        "black": "#000000",
-        "red": "#BB0000",
-        "green": "#00BB00",
-        "yellow": "#BBBB00",
-        "blue": "#0000BB",
-        "purple": "#BB00BB",
-        "cyan": "#00BBBB",
-        "white": "#BBBBBB",
-        "brightBlack": "#555555",
-        "brightRed": "#FF5555",
-        "brightGreen": "#55FF55",
-        "brightYellow": "#FFFF55",
-        "brightBlue": "#5555FF",
-        "brightPurple": "#FF55FF",
-        "brightCyan": "#55FFFF",
-        "brightWhite": "#FFFFFF",
-        "background": "#001640",
-        "foreground": "#BBBBBB",
-        "cursorColor": "#BBBBBB",
-        "selectionBackground": "#B5D5FF"
-      },
-      {
-        "name": "SimplyHost iTerm2 Dark",
         "black": "#073642",
         "red": "#DC322F",
         "green": "#859900",
@@ -533,16 +513,144 @@ $preset = @'
         "brightPurple": "#6C71C4",
         "brightCyan": "#93A1A1",
         "brightWhite": "#FDF6E3",
+        "name": "SimplyHost Solarized Dark",
         "background": "#002B36",
-        "foreground": "#A3B6B8",
-        "cursorColor": "#839496",
+        "foreground": "#839496",
+        "cursorColor": "#93A1A1",
         "selectionBackground": "#073642"
       }
     ]
   },
   "notes": {
-    "color_conversion": "Normalized RGB channels rounded to 8-bit; Display P3 colors are approximated.",
-    "shell": "iTerm2 uses /bin/zsh. PowerShell prompt is a native approximation of directory, Git and status segments."
+    "color_conversion": "Windows uses the standard Solarized Dark 16-color RGB palette. The macOS snapshot preserves the original iTerm2 colors.",
+    "shell": "PowerShell uses an Oh My Posh configuration with a Powerlevel10k-style two-line powerline prompt and Solarized Dark colors."
+  },
+  "oh_my_posh": {
+    "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+    "version": 4,
+    "final_space": true,
+    "console_title_template": "{{ .Shell }} | {{ .Folder }}",
+    "blocks": [
+      {
+        "type": "prompt",
+        "alignment": "left",
+        "segments": [
+          {
+            "type": "text",
+            "style": "plain",
+            "foreground": "#586E75",
+            "template": "\u256d\u2500"
+          },
+          {
+            "type": "os",
+            "style": "diamond",
+            "powerline_symbol": "\ue0b0",
+            "foreground": "#FDF6E3",
+            "background": "#073642",
+            "template": " {{ .Icon }} ",
+            "leading_diamond": "\ue0b2",
+            "trailing_diamond": ""
+          },
+          {
+            "type": "path",
+            "style": "powerline",
+            "powerline_symbol": "\ue0b0",
+            "foreground": "#268BD2",
+            "background": "#444444",
+            "template": " \uf07c {{ .Path }} ",
+            "options": {
+              "style": "agnoster_short",
+              "max_depth": 3,
+              "folder_separator_icon": "/",
+              "home_icon": "~"
+            }
+          },
+          {
+            "type": "git",
+            "style": "powerline",
+            "powerline_symbol": "\ue0b0",
+            "foreground": "#859900",
+            "background": "#073642",
+            "template": " {{ .HEAD }}{{ if .Working.Changed }} *{{ end }}{{ if .Staging.Changed }} +{{ end }} ",
+            "foreground_templates": [
+              "{{ if or (.Working.Changed) (.Staging.Changed) }}#B58900{{ end }}"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "prompt",
+        "alignment": "right",
+        "segments": [
+          {
+            "type": "status",
+            "style": "powerline",
+            "powerline_symbol": "\ue0b2",
+            "foreground": "#859900",
+            "background": "#444444",
+            "template": " {{ if eq .Code 0 }}\uf00c{{ else }}\uf00d {{ .Code }}{{ end }} ",
+            "options": {
+              "always_enabled": true
+            },
+            "invert_powerline": true,
+            "foreground_templates": [
+              "{{ if gt .Code 0 }}#DC322F{{ end }}"
+            ]
+          },
+          {
+            "type": "executiontime",
+            "style": "powerline",
+            "powerline_symbol": "\ue0b2",
+            "foreground": "#B58900",
+            "background": "#444444",
+            "template": " {{ .FormattedMs }} ",
+            "options": {
+              "threshold": 3000,
+              "style": "austin"
+            },
+            "invert_powerline": true
+          },
+          {
+            "type": "text",
+            "style": "plain",
+            "foreground": "#586E75",
+            "template": "\u2500\u256e"
+          }
+        ]
+      },
+      {
+        "type": "prompt",
+        "alignment": "left",
+        "newline": true,
+        "segments": [
+          {
+            "type": "text",
+            "style": "plain",
+            "foreground": "#586E75",
+            "template": "\u2570\u2500"
+          },
+          {
+            "type": "text",
+            "style": "plain",
+            "foreground": "#859900",
+            "foreground_templates": [
+              "{{ if gt .Code 0 }}#DC322F{{ end }}"
+            ],
+            "template": "\u276f"
+          }
+        ]
+      }
+    ],
+    "transient_prompt": {
+      "foreground": "#839496",
+      "background": "transparent",
+      "template": "\u276f "
+    },
+    "secondary_prompt": {
+      "foreground": "#586E75",
+      "background": "transparent",
+      "template": "\u2570\u2500 "
+    }
   }
 }
 '@ | ConvertFrom-Json
@@ -587,7 +695,7 @@ function Set-SimplyHostProfileBlock {
     $block = $start + "`r`n" + $Body.Trim() + "`r`n" + $end
     $content = ''
     if (Test-Path -LiteralPath $path) { $content = [IO.File]::ReadAllText($path) }
-    $pattern = '(?ms)^' + [regex]::Escape($start) + '\r?\n.*?^' + [regex]::Escape($end) + '\r?$'
+    $pattern = '(?ms)^' + [regex]::Escape($start) + '\r?\n.*?^' + [regex]::Escape($end) + '(?=\r?$)'
     if ([regex]::IsMatch($content, $pattern)) {
         # A delegate preserves literal dollars and backslashes in PowerShell code.
         $replacement = $block
@@ -597,6 +705,68 @@ function Set-SimplyHostProfileBlock {
     }
     Write-SimplyHostFile -Path $path -Content $content
 }
+function Set-SimplyHostTerminalDefault {
+    param([string]$Guid)
+    $paths = @(
+        (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'),
+        (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json'),
+        (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\settings.json')
+    )
+    # Preserve JSON-with-comments and formatting; change only the root defaultProfile value.
+    $tokenPattern = '(?s)"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*.*?\*/|[{}\[\]:,]'
+    $found = $false
+    foreach ($path in $paths) {
+        if (-not (Test-Path -LiteralPath $path)) { continue }
+        $found = $true
+        $content = [IO.File]::ReadAllText($path)
+        $matches = [regex]::Matches($content, $tokenPattern)
+        $tokens = @($matches | Where-Object { -not $_.Value.StartsWith('/') })
+        if ($tokens.Count -lt 2 -or $tokens[0].Value -ne '{' -or $tokens[-1].Value -ne '}') {
+            throw "Windows Terminal settings are not a JSON object: $path"
+        }
+        # Validate a temporary JSON representation before editing; do not rewrite users' comments.
+        $clean = [regex]::Replace($content, $tokenPattern, [System.Text.RegularExpressions.MatchEvaluator]{
+            param($match)
+            if ($match.Value.StartsWith('/')) { return [regex]::Replace($match.Value, '[^\r\n]', ' ') }
+            return $match.Value
+        })
+        for ($index = $tokens.Count - 2; $index -ge 0; $index--) {
+            if ($tokens[$index].Value -eq ',' -and $tokens[$index + 1].Value -match '^[}\]]$') {
+                $clean = $clean.Remove($tokens[$index].Index, 1).Insert($tokens[$index].Index, ' ')
+            }
+        }
+        $null = ConvertFrom-Json -InputObject $clean
+        $depth = 0
+        $values = @()
+        for ($index = 0; $index -lt $tokens.Count; $index++) {
+            $token = $tokens[$index]
+            if ($depth -eq 1 -and $token.Value -ceq '"defaultProfile"' -and $index + 2 -lt $tokens.Count -and $tokens[$index + 1].Value -eq ':') {
+                $value = $tokens[$index + 2]
+                if (-not $value.Value.StartsWith('"')) { throw "Invalid defaultProfile value in $path" }
+                $values += $value
+            }
+            if ($token.Value -eq '{' -or $token.Value -eq '[') { $depth++ }
+            if ($token.Value -eq '}' -or $token.Value -eq ']') { $depth-- }
+        }
+        $quotedGuid = ConvertTo-Json -InputObject $Guid -Compress
+        if ($values.Count -gt 0) {
+            foreach ($value in ($values | Sort-Object Index -Descending)) {
+                $content = $content.Remove($value.Index, $value.Length).Insert($value.Index, $quotedGuid)
+            }
+        } else {
+            $comma = ','
+            if ($tokens[1].Value -eq '}') { $comma = '' }
+            $content = $content.Insert($tokens[0].Index + 1, "`r`n    `"defaultProfile`": $quotedGuid$comma`r`n")
+        }
+        if ($PSCmdlet.ShouldProcess($path, 'Make SimplyHost PowerShell the default Windows Terminal profile')) {
+            Write-SimplyHostFile -Path $path -Content $content
+        }
+    }
+    if (-not $found) {
+        Write-Warning 'No Windows Terminal settings file found. Open Terminal once and rerun, or select SimplyHost PowerShell in Settings > Startup > Default profile.'
+    }
+}
+
 function Confirm-SimplyHostOption {
     param([string]$Question)
     if ($NoPrompt -or $WhatIfPreference -or [Console]::IsInputRedirected) { return $false }
@@ -609,6 +779,7 @@ if ($ExportPath) {
         [IO.Directory]::CreateDirectory($ExportPath) | Out-Null
         foreach ($entry in @(
             @{ File = 'windows-terminal.json'; Value = $preset.windows_terminal },
+            @{ File = 'simplyhost.omp.json'; Value = $preset.oh_my_posh },
             @{ File = 'iterm2-profile.json'; Value = $preset.iterm2 },
             @{ File = 'iterm2-globals.json'; Value = $preset.iterm2_globals }
         )) {
@@ -621,44 +792,65 @@ if ($ExportPath) {
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
 $terminalProfile = $preset.windows_terminal.profiles[0]
-if (Get-Command pwsh.exe -ErrorAction SilentlyContinue) { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
+if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
 if ($PSCmdlet.ShouldProcess($fragmentPath, 'Install SimplyHost PowerShell profile and color schemes')) {
     Write-SimplyHostFile -Path $fragmentPath -Content ((ConvertTo-Json -InputObject $preset.windows_terminal -Depth 30) + "`n")
 }
-Write-Host 'Open Windows Terminal and select SimplyHost PowerShell. Existing profiles and the default profile are preserved.'
-Write-Host 'Font required: JetBrainsMono Nerd Font Mono (15 pt). Install it from https://www.nerdfonts.com/font-downloads if missing.'
-Write-Host 'Windows Terminal controls appearance; PowerShell controls the command prompt. P3 colors and iTerm-only UI behavior are approximations.'
+Write-Host 'Terminal profile: SimplyHost PowerShell, Solarized Dark (#002B36).'
 
-if ($InstallPrompt -or (Confirm-SimplyHostOption 'Add the directory/Git/status prompt to your PowerShell profile?')) {
-    if ($PSCmdlet.ShouldProcess($PROFILE.CurrentUserAllHosts, 'Install SimplyHost prompt')) {
-        Set-SimplyHostProfileBlock -Name 'prompt' -Body @'
-function global:prompt {
-    $lastSucceeded = $?
-    $exitVariable = Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue
-    $savedExitCode = 0
-    if ($null -ne $exitVariable) { $savedExitCode = $exitVariable.Value }
-    try {
-        $ErrorActionPreference = 'Continue'
-        $location = Get-Location
-        $path = $location.Path
-        $branch = ''
-        if ($location.Provider.Name -eq 'FileSystem' -and (Get-Command git -ErrorAction SilentlyContinue)) {
-            $branch = & git -C $path symbolic-ref --quiet --short HEAD 2>$null
-            if (-not $branch) { $branch = & git -C $path rev-parse --short HEAD 2>$null }
+if (-not $SkipPrompt) {
+    $poshCommand = Get-Command oh-my-posh.exe -ErrorAction SilentlyContinue
+    if (-not $poshCommand) {
+        if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
+            throw 'Oh My Posh is required. Install App Installer (winget), or install Oh My Posh from https://ohmyposh.dev/docs/installation/windows and rerun.'
         }
-        Write-Host ' PS ' -ForegroundColor Cyan -NoNewline
-        Write-Host $path -ForegroundColor Blue -NoNewline
-        if ($branch) { Write-Host " [$branch]" -ForegroundColor Magenta -NoNewline }
-        if (-not $lastSucceeded) { Write-Host ' [failed]' -ForegroundColor Red -NoNewline }
-        $activeJobs = @(Get-Job -State Running -ErrorAction SilentlyContinue)
-        if ($activeJobs.Count -gt 0) { Write-Host " [jobs:$($activeJobs.Count)]" -ForegroundColor Yellow -NoNewline }
-        return "`n> "
-    } finally { $global:LASTEXITCODE = $savedExitCode }
+        if ($PSCmdlet.ShouldProcess('Oh My Posh', 'Install using winget')) {
+            & winget.exe install --id JanDeDobbeleer.OhMyPosh --exact --source winget --accept-package-agreements --accept-source-agreements
+            if ($LASTEXITCODE -ne 0) { throw 'Oh My Posh installation failed; rerun after resolving the winget error.' }
+            $env:PATH = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + $env:PATH
+            $poshCommand = Get-Command oh-my-posh.exe -ErrorAction SilentlyContinue
+            if (-not $poshCommand) {
+                $poshPath = Join-Path $env:LOCALAPPDATA 'Programs\oh-my-posh\bin\oh-my-posh.exe'
+                if (Test-Path -LiteralPath $poshPath) { $poshCommand = (Get-Item -LiteralPath $poshPath).FullName }
+            }
+            if (-not $poshCommand) { throw 'Oh My Posh was installed but is not available. Open a new PowerShell window and rerun.' }
+        }
+    }
+    if ($poshCommand -and -not $SkipFontInstall) {
+        $fontPresent = $false
+        foreach ($fontKey in @('HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts', 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts')) {
+            if (Test-Path -LiteralPath $fontKey) {
+                $fontValues = Get-ItemProperty -LiteralPath $fontKey
+                if (@($fontValues.PSObject.Properties.Name | Where-Object { $_ -match 'JetBrainsMono.*Nerd Font Mono' }).Count -gt 0) { $fontPresent = $true }
+            }
+        }
+        if (-not $fontPresent -and $PSCmdlet.ShouldProcess('JetBrains Mono Nerd Font', 'Install the font required for powerline icons')) {
+            & $poshCommand font install 'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip'
+            if ($LASTEXITCODE -ne 0) { throw 'Font installation failed. Install JetBrainsMono Nerd Font Mono, then rerun (or use -SkipFontInstall if already installed).' }
+        }
+    }
+    $themePath = Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json'
+    if ($PSCmdlet.ShouldProcess($themePath, 'Install the Powerlevel10k-style prompt theme')) {
+        Write-SimplyHostFile -Path $themePath -Content ((ConvertTo-Json -InputObject $preset.oh_my_posh -Depth 30) + "`n")
+    }
+    if ($PSCmdlet.ShouldProcess($PROFILE.CurrentUserAllHosts, 'Replace the basic SimplyHost prompt with Oh My Posh')) {
+        Set-SimplyHostProfileBlock -Name 'prompt' -Body @'
+$simplyHostPosh = Get-Command oh-my-posh.exe -ErrorAction SilentlyContinue
+if (-not $simplyHostPosh) {
+    $simplyHostPoshPath = Join-Path $env:LOCALAPPDATA 'Programs\oh-my-posh\bin\oh-my-posh.exe'
+    if (Test-Path -LiteralPath $simplyHostPoshPath) { $simplyHostPosh = (Get-Item -LiteralPath $simplyHostPoshPath).FullName }
 }
+if ($simplyHostPosh) {
+    & $simplyHostPosh init pwsh --config (Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json') | Invoke-Expression
+} else { Write-Warning 'SimplyHost prompt needs Oh My Posh. Rerun the terminal installer.' }
 '@
     }
 }
+if (-not $KeepDefaultProfile) { Set-SimplyHostTerminalDefault -Guid $terminalProfile.guid }
+Write-Host 'Close and reopen Windows Terminal to load the font, Solarized Dark profile, and powerline prompt.'
+Write-Host 'To open the themed profile directly: wt -p "SimplyHost PowerShell"'
+
 if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShell profile for repeat use?')) {
     if (-not $scriptSource -or -not (Test-Path -LiteralPath $scriptSource)) {
         throw 'Save this script as powershell.ps1 before installing the repeat command.'

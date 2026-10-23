@@ -863,13 +863,13 @@ function Install-SimplyHostConsoleAppearance {
 # Applied on every PowerShell startup, including the built-in Start-menu shortcut.
 if ($env:OS -eq 'Windows_NT' -and $Host.Name -eq 'ConsoleHost' -and -not $env:WT_SESSION) {
     try {
-        if (-not ('SimplyHost.ConsoleAppearanceV1' -as [type])) {
+        if (-not ('SimplyHost.ConsoleAppearanceV2' -as [type])) {
             Add-Type -TypeDefinition @"
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 namespace SimplyHost {
-    public static class ConsoleAppearanceV1 {
+    public static class ConsoleAppearanceV2 {
         [StructLayout(LayoutKind.Sequential)] public struct Coord { public short X, Y; }
         [StructLayout(LayoutKind.Sequential)] public struct Rect { public short Left, Top, Right, Bottom; }
         [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] public struct FontInfo {
@@ -889,6 +889,8 @@ namespace SimplyHost {
             [MarshalAs(UnmanagedType.ByValArray, SizeConst=16)] public uint[] Colors;
         }
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int kind);
+        [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
+        [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] static extern bool IsWindowVisible(IntPtr window);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleMode(IntPtr handle, out uint mode);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleMode(IntPtr handle, uint mode);
         [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleScreenBufferInfoEx(IntPtr handle, ref BufferInfo info);
@@ -936,6 +938,10 @@ namespace SimplyHost {
                 }
                 Check(WriteConsoleOutputAttribute(handle, cells, read, start, out written));
             }
+            // Start-menu launches can be delegated to Terminal without WT_SESSION.
+            // Its pseudoconsole has a hidden message window and cannot select the UI font.
+            IntPtr window = GetConsoleWindow();
+            if (window == IntPtr.Zero || !IsWindowVisible(window)) return;
             FontInfo font = new FontInfo();
             font.Size = (uint)Marshal.SizeOf(typeof(FontInfo));
             Check(GetCurrentConsoleFontEx(handle, false, ref font));
@@ -949,13 +955,13 @@ namespace SimplyHost {
             actual.Size = font.Size;
             Check(GetCurrentConsoleFontEx(handle, false, ref actual));
             if (!String.Equals(actual.Face, font.Face, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Console font unavailable: JetBrainsMono NFM. Restart Windows after installing the font, then reopen PowerShell.");
+                throw new InvalidOperationException("Classic console selected '" + actual.Face + "' instead of JetBrainsMono NFM. Reopen PowerShell after the font installation; if it remains unavailable, restart Windows.");
         }
     }
 }
 "@
         }
-        [SimplyHost.ConsoleAppearanceV1]::Apply()
+        [SimplyHost.ConsoleAppearanceV2]::Apply()
         $Host.UI.RawUI.BackgroundColor = [ConsoleColor]::DarkGray
         $Host.UI.RawUI.ForegroundColor = [ConsoleColor]::Blue
     } catch { Write-Warning ('SimplyHost console appearance: ' + $_.Exception.Message) }
@@ -991,7 +997,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.7 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.8 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'

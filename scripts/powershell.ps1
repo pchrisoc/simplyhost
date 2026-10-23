@@ -822,7 +822,14 @@ if (-not $SkipPrompt) {
         foreach ($fontKey in @('HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts', 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts')) {
             if (Test-Path -LiteralPath $fontKey) {
                 $fontValues = Get-ItemProperty -LiteralPath $fontKey
-                if (@($fontValues.PSObject.Properties.Name | Where-Object { $_ -match 'JetBrainsMono.*Nerd Font Mono' }).Count -gt 0) { $fontPresent = $true }
+                if ($null -eq $fontValues) { continue }
+                # Explicit enumeration also handles empty keys under Windows PowerShell 5.1 strict mode.
+                foreach ($fontProperty in $fontValues.PSObject.Properties) {
+                    if ($fontProperty.Name -match 'JetBrainsMono.*Nerd Font Mono') {
+                        $fontPresent = $true
+                        break
+                    }
+                }
             }
         }
         if (-not $fontPresent -and $PSCmdlet.ShouldProcess('JetBrains Mono Nerd Font', 'Install the font required for powerline icons')) {

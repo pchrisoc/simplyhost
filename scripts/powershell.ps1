@@ -15,7 +15,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($Help) {
     Write-Output 'Usage: .\powershell.ps1 [-ExportPath NEW_DIRECTORY] [-InstallPrompt] [-AddCommand] [-NoPrompt] [-SkipPrompt] [-SkipFontInstall] [-KeepDefaultProfile] [-NoLaunch] [-WhatIf]'
-    Write-Output 'Installs a Solarized Dark Windows Terminal profile, a Powerlevel10k-style Oh My Posh prompt, and JetBrains Mono Nerd Font. Makes the themed profile the default unless -KeepDefaultProfile is set.'
+    Write-Output 'Installs Solarized Dark for normal Windows PowerShell and Windows Terminal, a Powerlevel10k-style Oh My Posh prompt, and JetBrains Mono Nerd Font. Makes the themed profile the default unless -KeepDefaultProfile is set.'
     return
 }
 $preset = @'
@@ -814,7 +814,7 @@ function Set-SimplyHostTerminalSettings {
         $content = Set-SimplyHostActiveProfileAppearance -Content $content -ManagedProfile $ManagedProfile
         if ($PSCmdlet.ShouldProcess($path, 'Apply Solarized Dark and the Nerd Font to SimplyHost and the active Terminal profile')) { Write-SimplyHostFile -Path $path -Content $content }
     }
-    if (-not $found) { Write-Warning 'Open Windows Terminal once and rerun, then select SimplyHost PowerShell in its profile menu.' }
+    if (-not $found) { Write-Verbose 'No Windows Terminal settings found; normal PowerShell uses its startup console helper.' }
 }
 
 function Test-SimplyHostNerdFont {
@@ -856,6 +856,117 @@ function Install-SimplyHostStartMenuShortcut {
     }
 }
 
+function Install-SimplyHostConsoleAppearance {
+    $consolePath = Join-Path $env:LOCALAPPDATA 'SimplyHost\console.ps1'
+    if (-not $PSCmdlet.ShouldProcess($consolePath, 'Persist font and Solarized colors for the normal PowerShell console')) { return }
+    Write-SimplyHostFile -Path $consolePath -Content @'
+# Applied on every PowerShell startup, including the built-in Start-menu shortcut.
+if ($env:OS -eq 'Windows_NT' -and $Host.Name -eq 'ConsoleHost' -and -not $env:WT_SESSION) {
+    try {
+        if (-not ('SimplyHost.ConsoleAppearanceV1' -as [type])) {
+            Add-Type -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+namespace SimplyHost {
+    public static class ConsoleAppearanceV1 {
+        [StructLayout(LayoutKind.Sequential)] public struct Coord { public short X, Y; }
+        [StructLayout(LayoutKind.Sequential)] public struct Rect { public short Left, Top, Right, Bottom; }
+        [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] public struct FontInfo {
+            public uint Size, Font;
+            public Coord Cell;
+            public uint Family, Weight;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string Face;
+        }
+        [StructLayout(LayoutKind.Sequential)] public struct BufferInfo {
+            public uint Size;
+            public Coord BufferSize, Cursor;
+            public ushort Attributes;
+            public Rect Window;
+            public Coord Maximum;
+            public ushort PopupAttributes;
+            [MarshalAs(UnmanagedType.Bool)] public bool Fullscreen;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst=16)] public uint[] Colors;
+        }
+        [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int kind);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleMode(IntPtr handle, out uint mode);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleMode(IntPtr handle, uint mode);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetConsoleScreenBufferInfoEx(IntPtr handle, ref BufferInfo info);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleScreenBufferInfoEx(IntPtr handle, ref BufferInfo info);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool SetConsoleTextAttribute(IntPtr handle, ushort attributes);
+        [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool GetCurrentConsoleFontEx(IntPtr handle, bool maximum, ref FontInfo info);
+        [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool SetCurrentConsoleFontEx(IntPtr handle, bool maximum, ref FontInfo info);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool ReadConsoleOutputAttribute(IntPtr handle, [Out] ushort[] data, uint length, Coord start, out uint count);
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool WriteConsoleOutputAttribute(IntPtr handle, ushort[] data, uint length, Coord start, out uint count);
+        static void Check(bool success) { if (!success) throw new Win32Exception(Marshal.GetLastWin32Error()); }
+        public static void Apply() {
+            IntPtr handle = GetStdHandle(-11);
+            uint mode;
+            if (!GetConsoleMode(handle, out mode)) return; // Redirected output has no console to theme.
+            BufferInfo info = new BufferInfo();
+            info.Size = (uint)Marshal.SizeOf(typeof(BufferInfo));
+            Check(GetConsoleScreenBufferInfoEx(handle, ref info));
+            ushort oldAttributes = info.Attributes;
+            // Console color indexes follow BGR order, unlike ANSI's RGB order.
+            string[] palette = { "073642", "268BD2", "859900", "2AA198", "DC322F", "D33682", "B58900", "EEE8D5",
+                                 "002B36", "839496", "586E75", "93A1A1", "CB4B16", "6C71C4", "657B83", "FDF6E3" };
+            for (int i=0; i<16; i++) {
+                uint rgb = Convert.ToUInt32(palette[i], 16);
+                info.Colors[i] = ((rgb & 255) << 16) | (rgb & 65280) | ((rgb >> 16) & 255);
+            }
+            info.Attributes = 0x89; // Background #002B36, foreground #839496.
+            // This setter expects exclusive right/bottom edges; the getter returns inclusive ones.
+            info.Window.Right++;
+            info.Window.Bottom++;
+            Check(SetConsoleScreenBufferInfoEx(handle, ref info));
+            Check(SetConsoleTextAttribute(handle, 0x89));
+            Check(SetConsoleMode(handle, mode | 4)); // ANSI colors used by Oh My Posh.
+            // Recolor the existing default cells without clearing text or scrollback.
+            ushort[] cells = new ushort[4096];
+            int total = info.BufferSize.X * info.BufferSize.Y;
+            for (int offset=0; offset<total; offset+=cells.Length) {
+                Coord start = new Coord();
+                start.X = (short)(offset % info.BufferSize.X);
+                start.Y = (short)(offset / info.BufferSize.X);
+                uint read, written;
+                uint length = (uint)Math.Min(cells.Length, total-offset);
+                Check(ReadConsoleOutputAttribute(handle, cells, length, start, out read));
+                for (int i=0; i<read; i++) {
+                    if ((cells[i] & 255) == (oldAttributes & 255)) cells[i] = (ushort)((cells[i] & 65280) | 0x89);
+                }
+                Check(WriteConsoleOutputAttribute(handle, cells, read, start, out written));
+            }
+            FontInfo font = new FontInfo();
+            font.Size = (uint)Marshal.SizeOf(typeof(FontInfo));
+            Check(GetCurrentConsoleFontEx(handle, false, ref font));
+            font.Face = "JetBrainsMono NFM";
+            font.Cell.X = 0;
+            font.Cell.Y = 20;
+            font.Family = 54;
+            font.Weight = 400;
+            Check(SetCurrentConsoleFontEx(handle, false, ref font));
+            FontInfo actual = new FontInfo();
+            actual.Size = font.Size;
+            Check(GetCurrentConsoleFontEx(handle, false, ref actual));
+            if (!String.Equals(actual.Face, font.Face, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Console font unavailable: JetBrainsMono NFM. Restart Windows after installing the font, then reopen PowerShell.");
+        }
+    }
+}
+"@
+        }
+        [SimplyHost.ConsoleAppearanceV1]::Apply()
+        $Host.UI.RawUI.BackgroundColor = [ConsoleColor]::DarkGray
+        $Host.UI.RawUI.ForegroundColor = [ConsoleColor]::Blue
+    } catch { Write-Warning ('SimplyHost console appearance: ' + $_.Exception.Message) }
+}
+'@
+    Set-SimplyHostProfileBlock -Name 'console' -Body @'
+$simplyHostConsole = Join-Path $env:LOCALAPPDATA 'SimplyHost\console.ps1'
+if (Test-Path -LiteralPath $simplyHostConsole) { . $simplyHostConsole }
+'@
+}
+
 function Confirm-SimplyHostOption {
     param([string]$Question)
     if ($NoPrompt -or $WhatIfPreference -or [Console]::IsInputRedirected) { return $false }
@@ -880,7 +991,7 @@ if ($ExportPath) {
 }
 if ($env:OS -ne 'Windows_NT') { throw 'Windows installation requires Windows. Use -ExportPath to inspect the preset elsewhere.' }
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is missing.' }
-Write-Host ('SimplyHost terminal setup 2026.10.23.6 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
+Write-Host ('SimplyHost terminal setup 2026.10.23.7 (PowerShell ' + $PSVersionTable.PSVersion.ToString() + ')')
 $terminalProfile = $preset.windows_terminal.profiles[0]
 if ($PSVersionTable.PSEdition -eq 'Core') { $terminalProfile.commandline = 'pwsh.exe -NoLogo' }
 $fragmentPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\SimplyHost\terminal.json'
@@ -914,6 +1025,7 @@ if (-not $SkipPrompt) {
             if ($LASTEXITCODE -ne 0) { throw 'Font installation failed. Install JetBrainsMono NFM, then rerun (or use -SkipFontInstall if already installed).' }
         }
     }
+    Install-SimplyHostConsoleAppearance
     $themePath = Join-Path $env:LOCALAPPDATA 'SimplyHost\themes\solarized-dark.omp.json'
     if ($PSCmdlet.ShouldProcess($themePath, 'Install the Powerlevel10k-style prompt theme')) {
         Write-SimplyHostFile -Path $themePath -Content ((ConvertTo-Json -InputObject $preset.oh_my_posh -Depth 30) + "`n")
@@ -938,9 +1050,9 @@ if ($simplyHostPosh) {
     }
 }
 Set-SimplyHostTerminalSettings -ManagedProfile $terminalProfile -KeepDefault:$KeepDefaultProfile
-Write-Host 'Appearance settings saved for SimplyHost PowerShell. Existing tabs may retain their old rendering state.'
+Write-Host 'Appearance saved for normal Windows PowerShell and Windows Terminal.'
 Write-Host 'Font: JetBrainsMono NFM. Colors: background #002B36, text #839496. The active Terminal profile is also updated when WT_PROFILE_ID is available.'
-Write-Host 'Open the themed profile: wt -p "SimplyHost PowerShell"'
+Write-Host 'The built-in Windows PowerShell Start-menu entry will load the font, colors, and prompt on startup.'
 
 if ($AddCommand -or (Confirm-SimplyHostOption 'Add sh-terminal to your PowerShell profile for repeat use?')) {
     if (-not $scriptSource -or -not (Test-Path -LiteralPath $scriptSource)) {
@@ -958,14 +1070,10 @@ if ($terminalExecutable) {
     Install-SimplyHostStartMenuShortcut -ProfileGuid $terminalProfile.guid -TerminalExecutable $terminalExecutable.Path
 }
 if (-not $NoLaunch) {
-    if (Get-Command wt.exe -ErrorAction SilentlyContinue) {
-        if ($PSCmdlet.ShouldProcess('Windows Terminal', 'Open a fresh SimplyHost PowerShell window with the installed font and colors')) {
-            Start-Process -FilePath 'wt.exe' -ArgumentList @('-w', 'new', 'new-tab', '-p', $terminalProfile.guid)
-            Write-Host 'Setup complete. Use the NEW SimplyHost PowerShell window; the old tab may retain its old appearance.'
-        }
-    } else {
-        Write-Warning 'Windows Terminal (wt.exe) was not found on PATH. Open Windows Terminal and select SimplyHost PowerShell.'
+    $shellExecutable = Join-Path $PSHOME 'powershell.exe'
+    if ($PSVersionTable.PSEdition -eq 'Core') { $shellExecutable = Join-Path $PSHOME 'pwsh.exe' }
+    if ($PSCmdlet.ShouldProcess($shellExecutable, 'Open a fresh PowerShell window with the saved startup appearance')) {
+        Start-Process -FilePath $shellExecutable -ArgumentList '-NoLogo'
     }
-} else {
-    Write-Host 'Setup complete. Open Windows Terminal and select SimplyHost PowerShell to load the new appearance.'
 }
+Write-Host 'Setup complete. Open Windows PowerShell normally from Start to use the saved appearance.'

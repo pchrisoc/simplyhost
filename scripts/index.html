@@ -16,8 +16,16 @@
     .platform-button svg { width: 1.4rem; height: 1.4rem; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     ul { list-style: none; padding: 0; }
-    li { margin: .75rem 0; }
-    input[type="checkbox"] { width: 1.1rem; height: 1.1rem; vertical-align: middle; margin-right: .5rem; }
+    #scripts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: .75rem; }
+    .script-card { display: flex; align-items: stretch; border: 1px solid light-dark(#c5ccd5, #394351); border-radius: .5rem; overflow: hidden; }
+    .script-card:hover { background: light-dark(#f1f5f9, #202833); }
+    .script-card:has(.script-select[aria-pressed="true"]) { color: light-dark(#1756a9, #92c5ff); background: light-dark(#e2edff, #19354b); border-color: currentColor; }
+    .script-select { flex: 1; min-width: 0; padding: .9rem 1rem; border: 0; background: transparent; color: inherit; text-align: left; }
+    .script-name { display: block; overflow-wrap: anywhere; font-family: ui-monospace, monospace; }
+    .script-source { align-self: center; display: grid; place-items: center; flex-shrink: 0; width: 2rem; min-height: 2.5rem; margin-right: .5rem; border-radius: .35rem; text-decoration: none; opacity: .65; }
+    .script-source:hover { opacity: 1; background: light-dark(#dbe6f5, #2b4056); }
+    .script-select:focus-visible { outline-offset: -3px; }
+    .script-source:focus-visible { outline: 2px solid #92c5ff; outline-offset: 1px; }
     .command-block { position: relative; background: #151922; color: #edf2fa; border-radius: .5rem; }
     pre { margin: 0; padding: 1.25rem 4rem 1.25rem 1.25rem; overflow-x: auto; }
     code { font-family: ui-monospace, monospace; font-size: .9rem; }
@@ -28,8 +36,7 @@
     button:focus-visible { outline: 2px solid #92c5ff; outline-offset: 2px; }
     #copy-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     a { color: light-dark(#1756a9, #92c5ff); text-underline-offset: .2em; }
-    li a { font-family: ui-monospace, monospace; }
-    .platform-note { font: .8rem/1.4 system-ui, sans-serif; opacity: .8; margin-left: .5rem; }
+    .platform-note { display: block; margin-top: .35rem; font: .8rem/1.4 system-ui, sans-serif; opacity: .8; }
     footer { margin-top: 3rem; font-size: .875rem; }
   </style>
 </head>
@@ -47,7 +54,7 @@
         </button>
       </div>
     </header>
-    <p>Select scripts to add their run commands below. File links open the source.</p>
+    <p>Select script boxes to add their run commands below. Use ↗ to view the source.</p>
     <p id="platform-status" class="sr-only" role="status">Choose the system where you will run the script. Unsupported scripts are hidden.</p>
     <p>The list loads automatically from the repository’s main branch, including subfolders.</p>
     <div class="command-block">
@@ -141,33 +148,42 @@
       return '# Download and review; use the interpreter required by this script:\n' + download;
     }
     function updateCommands() {
-      commandText = Array.from(scriptsList.querySelectorAll('input:checked'))
-        .map(checkbox => runCommand(checkbox.dataset.scriptName)).join('\n\n');
+      commandText = Array.from(scriptsList.querySelectorAll('button[data-script-name][aria-pressed="true"]'))
+        .map(button => runCommand(button.dataset.scriptName)).join('\n\n');
       commands.textContent = commandText || '# Select a script below to get its run command.';
       copyButton.disabled = !commandText;
       copyStatus.textContent = '';
     }
     function renderScripts(names) {
-      const selected = new Set(Array.from(scriptsList.querySelectorAll('input:checked'))
-        .map(checkbox => checkbox.dataset.scriptName));
+      const selected = new Set(Array.from(scriptsList.querySelectorAll('button[data-script-name][aria-pressed="true"]'))
+        .map(button => button.dataset.scriptName));
       const rows = names.map(name => {
         const row = document.createElement('li');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.dataset.scriptName = name;
-        checkbox.setAttribute('aria-label', 'Select ' + name);
-        checkbox.checked = selected.has(name);
+        row.className = 'script-card';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'script-select';
+        button.dataset.scriptName = name;
+        button.setAttribute('aria-label', 'Select ' + name);
+        button.setAttribute('aria-pressed', String(selected.has(name)));
+        const label = document.createElement('span');
+        label.className = 'script-name';
+        label.textContent = selectedPlatform === 'windows' && name.endsWith('.sh') ? name.slice(0, -3) : name;
+        button.append(label);
         const link = document.createElement('a');
         const choice = variant(name);
         link.href = scriptRoot + encodedPath(choice.file);
-        link.textContent = selectedPlatform === 'windows' && name.endsWith('.sh') ? name.slice(0, -3) : name;
-        row.append(checkbox, ' ', link);
+        link.className = 'script-source';
+        link.textContent = '↗';
+        link.title = 'View source: ' + name;
+        link.setAttribute('aria-label', 'View source for ' + name);
         if (choice.note) {
           const note = document.createElement('span');
           note.className = 'platform-note';
           note.textContent = choice.note;
-          row.append(note);
+          button.append(note);
         }
+        row.append(button, link);
         return row;
       });
       scriptsList.replaceChildren(...rows);
@@ -211,7 +227,12 @@
       renderPlatform();
     });
     for (const button of platformChoice.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.platform === selectedPlatform));
-    scriptsList.addEventListener('change', updateCommands);
+    scriptsList.addEventListener('click', event => {
+      const button = event.target.closest('button[data-script-name]');
+      if (!button) return;
+      button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'));
+      updateCommands();
+    });
     refreshButton.addEventListener('click', loadScripts);
     copyButton.addEventListener('click', async () => {
       try {

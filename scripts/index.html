@@ -8,6 +8,10 @@
     :root { color-scheme: light dark; }
     body { max-width: 48rem; margin: 4rem auto; padding: 0 1.5rem; font: 1rem/1.6 system-ui, sans-serif; }
     .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .scripts-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
+    .scripts-heading h2 { margin: 0; }
+    #refresh { display: grid; place-items: center; flex-shrink: 0; width: 2.5rem; height: 2.5rem; padding: 0; border: 1px solid light-dark(#c5ccd5, #394351); border-radius: .45rem; background: transparent; color: inherit; }
+    #refresh:hover:enabled { color: light-dark(#1756a9, #92c5ff); background: light-dark(#e2edff, #19354b); border-color: currentColor; }
     h1 { margin: 0; font-size: clamp(1.2rem, 4.2vw, 2rem); line-height: 1.2; }
     #platform-choice { display: flex; flex-shrink: 0; gap: .25rem; }
     .platform-button { --platform-cutout: light-dark(#fff, #121212); display: flex; align-items: center; justify-content: center; gap: .25rem; min-width: 2.5rem; height: 2.5rem; padding: .45rem; border: 1px solid transparent; border-radius: .45rem; background: transparent; color: inherit; opacity: .45; }
@@ -64,8 +68,12 @@
       </button>
     </div>
     <span id="copy-status" role="status"></span>
-    <h2>Available scripts</h2>
-    <button id="refresh" type="button">Refresh</button>
+    <div class="scripts-heading">
+      <h2>Available scripts</h2>
+      <button id="refresh" type="button" aria-label="Reload scripts" title="Reload scripts">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M20 12a8 8 0 1 0-2.3 5.7"/></svg>
+      </button>
+    </div>
     <p id="list-status" role="status">Loading scripts…</p>
     <ul id="scripts"></ul>
     <noscript><p>Enable JavaScript or browse the scripts using the GitHub link below.</p></noscript>

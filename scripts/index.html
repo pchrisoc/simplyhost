@@ -86,7 +86,7 @@
     const windowsRuntimes = {py: 'python', js: 'node', mjs: 'node', cjs: 'node', rb: 'ruby', pl: 'perl', php: 'php', lua: 'lua', r: 'Rscript'};
     const platformStatus = document.getElementById('platform-status');
     const platformChoice = document.getElementById('platform-choice');
-    let selectedPlatform = /Windows/i.test(navigator.userAgent) ? 'windows' : 'unix';
+    let selectedPlatform = 'unix';
     try {
       const saved = localStorage.getItem('simplyhost-script-platform');
       if (saved === 'windows' || saved === 'unix') selectedPlatform = saved;

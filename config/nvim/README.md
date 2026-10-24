@@ -29,8 +29,16 @@ For a fresh install the entire saved config is copied. An existing non-LazyVim
 config is backed up as a directory first. Downloads are staged and validated
 before configuration backups or changes. LazyVim installs plugins on first launch.
 
-Native Windows shells are detected and exit with a message to use WSL; this Bash
-installer does not execute PowerShell commands.
+On native Windows use `scripts/nvim.ps1` from PowerShell, or select Windows on
+the scripts website. It installs missing Neovim/Git through winget, persists their
+executable directories in the user PATH, and installs this config in
+`%LOCALAPPDATA%\nvim` (honoring `XDG_CONFIG_HOME` and `NVIM_APPNAME`). It uses
+the same selective LazyVim updates and numbered backups described above. It
+optionally saves `sh-nvim` in the PowerShell profile for repeat use. Neovim 0.11.2+ and Git 2.19+ are checked before changing config. Tree-sitter
+needs tree-sitter-cli and a C compiler; search features can use ripgrep and fd.
+These plugin dependencies are separate installations; run `:LazyHealth` to
+inspect them. The Bash installer still requires macOS, Linux,
+or WSL and does not execute PowerShell commands.
 
 When run from this checkout, the installer uses this local directory. When piped
 from a URL, it downloads this directory from the repository's `main` branch.

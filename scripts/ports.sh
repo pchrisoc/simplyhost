@@ -18,7 +18,7 @@ ask() {
 
 heading() { printf '\n%s\n' "$*"; }
 
-linux_only() { [[ $(uname -s) == Linux ]] || fail 'This tool requires Linux.'; }
+
 
 shortcut() {
   [[ ${SIMPLYHOST_NO_SHORTCUT:-0} == 1 ]] && return 0
@@ -48,16 +48,28 @@ shortcut() {
 }
 
 if [[ ${1:-} == --help ]]; then echo 'Usage: ports.sh [PORT ...] — list TCP/UDP listeners or check port conflicts'; exit 0; fi
-linux_only; need ss
+platform=$(uname -s)
+case "$platform" in
+  Linux) need ss ;;
+  Darwin) need lsof ;;
+  *) fail 'Use the Windows PowerShell version on Windows.' ;;
+esac
 if [[ $# -eq 0 ]]; then
   heading 'Listening TCP and UDP ports (process names may require root)'
-  ss -lntup
+  if [[ "$platform" == Linux ]]; then ss -lntup
+  else
+    lsof -nP -iTCP -sTCP:LISTEN || [[ $? -eq 1 ]]
+    lsof -nP -iUDP || [[ $? -eq 1 ]]
+  fi
 else
   conflicts=0
   for port in "$@"; do
     [[ "$port" =~ ^[0-9]{1,5}$ ]] || fail "Invalid port: $port"
     port=$((10#$port)); [[ $port -ge 1 && $port -le 65535 ]] || fail "Invalid port: $port"
-    listeners=$(ss -H -lntu "sport = :$port")
+    if [[ "$platform" == Linux ]]; then listeners=$(ss -H -lntu "sport = :$port")
+    else
+      listeners=$({ lsof -nP -iTCP:"$port" -sTCP:LISTEN || [[ $? -eq 1 ]]; lsof -nP -iUDP:"$port" || [[ $? -eq 1 ]]; })
+    fi
     if [[ -n "$listeners" ]]; then printf 'IN USE: %s\n%s\n' "$port" "$listeners"; conflicts=$((conflicts+1)); else printf 'AVAILABLE: %s\n' "$port"; fi
   done
 fi

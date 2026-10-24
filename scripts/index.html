@@ -7,7 +7,14 @@
   <style>
     :root { color-scheme: light dark; }
     body { max-width: 48rem; margin: 4rem auto; padding: 0 1.5rem; font: 1rem/1.6 system-ui, sans-serif; }
-    h1 { line-height: 1.2; }
+    .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    h1 { margin: 0; font-size: clamp(1.2rem, 4.2vw, 2rem); line-height: 1.2; }
+    #platform-choice { display: flex; flex-shrink: 0; gap: .25rem; }
+    .platform-button { --platform-cutout: light-dark(#fff, #121212); display: flex; align-items: center; justify-content: center; gap: .25rem; min-width: 2.5rem; height: 2.5rem; padding: .45rem; border: 1px solid transparent; border-radius: .45rem; background: transparent; color: inherit; opacity: .45; }
+    .platform-button:hover { opacity: 1; background: light-dark(#f1f5f9, #202833); }
+    .platform-button[aria-pressed="true"] { --platform-cutout: light-dark(#e2edff, #19354b); opacity: 1; color: light-dark(#1756a9, #92c5ff); background: light-dark(#e2edff, #19354b); border-color: currentColor; }
+    .platform-button svg { width: 1.4rem; height: 1.4rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     ul { list-style: none; padding: 0; }
     li { margin: .75rem 0; }
     input[type="checkbox"] { width: 1.1rem; height: 1.1rem; vertical-align: middle; margin-right: .5rem; }
@@ -22,13 +29,26 @@
     #copy-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     a { color: light-dark(#1756a9, #92c5ff); text-underline-offset: .2em; }
     li a { font-family: ui-monospace, monospace; }
+    .platform-note { font: .8rem/1.4 system-ui, sans-serif; opacity: .8; margin-left: .5rem; }
     footer { margin-top: 3rem; font-size: .875rem; }
   </style>
 </head>
 <body>
   <main>
-    <h1>SimplyHost Scripts</h1>
+    <header class="page-heading">
+      <h1>SimplyHost Scripts</h1>
+      <div id="platform-choice" role="group" aria-label="Operating system">
+        <button class="platform-button" type="button" data-platform="windows" aria-label="Windows (PowerShell)" title="Windows (PowerShell)" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 4.5 10.5 3.3v8H2zm10-1.4L22 1.7v9.6H12zM2 12.7h8.5v8L2 19.5zm10 0h10v9.6l-10-1.4z"/></svg>
+        </button>
+        <button class="platform-button" type="button" data-platform="unix" aria-label="macOS / Linux (Bash)" title="macOS / Linux (Bash)" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.75 3.08.81 1.17-.24 2.29-.94 3.54-.85 1.5.12 2.63.71 3.38 1.79-3.1 1.86-2.36 5.95.48 7.1-.57 1.5-1.31 3-2.49 4.13l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 9V6a4 4 0 0 1 8 0v3c0 2 3 5 3 8s-3 4-7 4-7-1-7-4 3-6 3-8Z" fill="currentColor"/><ellipse cx="12" cy="15.5" rx="4" ry="4.5" fill="var(--platform-cutout)" stroke="none"/><ellipse cx="10.4" cy="6.5" rx="1.1" ry="1.5" fill="var(--platform-cutout)" stroke="none"/><ellipse cx="13.6" cy="6.5" rx="1.1" ry="1.5" fill="var(--platform-cutout)" stroke="none"/><path d="m10 9 2-1 2 1-2 1.5Z" fill="var(--platform-cutout)" stroke="none"/><path d="m7 19-3 2 5 1 1-2m7-1 3 2-5 1-1-2" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </header>
     <p>Select scripts to add their run commands below. File links open the source.</p>
+    <p id="platform-status" class="sr-only" role="status">Choose the system where you will run the script. Unsupported scripts are hidden.</p>
     <p>The list loads automatically from the repository’s main branch, including subfolders.</p>
     <div class="command-block">
       <pre><code id="commands"># Select a script below to get its run command.</code></pre>
@@ -55,6 +75,15 @@
     const listStatus = document.getElementById('list-status');
     const refreshButton = document.getElementById('refresh');
     const scriptExtensions = new Set(['sh', 'bash', 'zsh', 'fish', 'ps1', 'py', 'js', 'mjs', 'cjs', 'ts', 'rb', 'pl', 'php', 'lua', 'r', 'awk', 'bat', 'cmd', 'vbs', 'wsf', 'swift']);
+    const windowsTools = new Set(['menu', 'doctor', 'health', 'ports', 'storage', 'inventory', 'backup', 'backup-check', 'new-service', 'logs', 'compose-update', 'template']);
+    const windowsRuntimes = {py: 'python', js: 'node', mjs: 'node', cjs: 'node', rb: 'ruby', pl: 'perl', php: 'php', lua: 'lua', r: 'Rscript'};
+    const platformStatus = document.getElementById('platform-status');
+    const platformChoice = document.getElementById('platform-choice');
+    let selectedPlatform = /Windows/i.test(navigator.userAgent) ? 'windows' : 'unix';
+    try {
+      const saved = localStorage.getItem('simplyhost-script-platform');
+      if (saved === 'windows' || saved === 'unix') selectedPlatform = saved;
+    } catch {}
     let scriptNames = [];
     let commandText = '';
 
@@ -71,21 +100,44 @@
       if (!name || name.startsWith('tools/') || name.split('/').some(segment => segment.startsWith('.'))) return false;
       return scriptExtensions.has(extension(name)) || entry.mode === '100755';
     }
-    function runCommand(name) {
-      const url = scriptRoot + encodedPath(name);
+    function variant(name) {
       const ext = extension(name);
-      const downloadName = 'simplyhost-script' + (/^[a-z0-9]+$/.test(ext) ? '.' + ext : '');
-      if (ext === 'ps1') {
-        return '# Run in PowerShell:\nInvoke-WebRequest -Uri ' + url + ' -OutFile ' + downloadName + '; & .\\' + downloadName;
+      if (name === 'windows.ps1' || (name === 'nvim.ps1' && scriptNames.includes('nvim.sh'))) return null; // Listed through their tool names below.
+      if (selectedPlatform === 'windows') {
+        if (name === 'nvim.sh') return {file: 'nvim.ps1', arguments: '', note: 'Native Windows · Git + winget if missing'};
+        const tool = name.endsWith('.sh') ? name.slice(0, -3) : '';
+        if (windowsTools.has(tool)) return {file: 'windows.ps1', arguments: " -Tool '" + tool + "'", note: ['backup', 'backup-check'].includes(tool) ? 'Native Windows · Python 3.8+' : ['logs', 'compose-update'].includes(tool) ? 'Native Windows · Docker tools need a running daemon' : 'Native Windows'};
+        if (['ps1', 'bat', 'cmd', 'vbs', 'wsf'].includes(ext) || windowsRuntimes[ext]) return {file: name, arguments: '', note: ''};
+        return null;
       }
-      if (ext === 'bat' || ext === 'cmd') {
-        return '# Run in PowerShell:\nInvoke-WebRequest -Uri ' + url + ' -OutFile ' + downloadName + '; & .\\' + downloadName;
+      if (['ps1', 'bat', 'cmd', 'vbs', 'wsf'].includes(ext)) return null;
+      return {file: name, arguments: '', note: name === 'iterm2.sh' ? 'macOS only' : name === 'docker.sh' ? 'Debian / Ubuntu only' : ''};
+    }
+    function availableScripts() {
+      const files = new Set(scriptNames);
+      return scriptNames.filter(name => {
+        const choice = variant(name);
+        return choice && files.has(choice.file);
+      });
+    }
+    function runCommand(name) {
+      const choice = variant(name);
+      if (!choice) return '';
+      const url = scriptRoot + encodedPath(choice.file);
+      const ext = extension(choice.file);
+      const downloadName = 'simplyhost-' + name.replace(/[^a-zA-Z0-9_-]/g, '-') + '.' + ext;
+      if (selectedPlatform === 'windows') {
+        const download = "$script = Join-Path $env:TEMP '" + downloadName + "'; Invoke-WebRequest -UseBasicParsing -Uri '" + url + "' -OutFile $script; ";
+        if (['ps1', 'bat', 'cmd'].includes(ext)) return download + '& $script' + choice.arguments;
+        if (['vbs', 'wsf'].includes(ext)) return download + '& cscript.exe //nologo $script';
+        if (windowsRuntimes[ext]) return download + '& ' + windowsRuntimes[ext] + ' $script';
+        return '';
       }
       const shell = {sh: 'bash', bash: 'bash', zsh: 'zsh', fish: 'fish'}[ext];
       if (shell) return 'curl -fsSL ' + url + ' | ' + shell;
       const runtime = {py: 'python3', js: 'node', mjs: 'node', cjs: 'node', rb: 'ruby', pl: 'perl', php: 'php', lua: 'lua', r: 'Rscript', swift: 'swift'}[ext];
       const download = 'curl -fsSL ' + url + ' -o ' + downloadName;
-      if (runtime) return '# Run in a Unix shell with ' + runtime + ':\n' + download + ' && ' + runtime + ' ' + downloadName;
+      if (runtime) return download + ' && ' + runtime + ' ' + downloadName;
       return '# Download and review; use the interpreter required by this script:\n' + download;
     }
     function updateCommands() {
@@ -106,13 +158,29 @@
         checkbox.setAttribute('aria-label', 'Select ' + name);
         checkbox.checked = selected.has(name);
         const link = document.createElement('a');
-        link.href = scriptRoot + encodedPath(name);
-        link.textContent = name;
+        const choice = variant(name);
+        link.href = scriptRoot + encodedPath(choice.file);
+        link.textContent = selectedPlatform === 'windows' && name.endsWith('.sh') ? name.slice(0, -3) : name;
         row.append(checkbox, ' ', link);
+        if (choice.note) {
+          const note = document.createElement('span');
+          note.className = 'platform-note';
+          note.textContent = choice.note;
+          row.append(note);
+        }
         return row;
       });
       scriptsList.replaceChildren(...rows);
       updateCommands();
+    }
+    function renderPlatform() {
+      for (const button of platformChoice.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.platform === selectedPlatform));
+      const names = availableScripts();
+      renderScripts(names);
+      platformStatus.textContent = selectedPlatform === 'windows'
+        ? 'Native PowerShell commands. Linux-only Docker installation and macOS-only iTerm2 setup are hidden. No WSL required.'
+        : 'Bash commands for macOS / Linux. Tools limited to one system are labeled.';
+      listStatus.textContent = names.length + ' scripts available for ' + (selectedPlatform === 'windows' ? 'Windows.' : 'macOS / Linux.');
     }
     async function loadScripts() {
       refreshButton.disabled = true;
@@ -126,8 +194,7 @@
         const data = await response.json();
         if (data.truncated || !Array.isArray(data.tree)) throw new Error('GitHub returned an incomplete file list');
         scriptNames = data.tree.filter(isScript).map(entry => entry.path.slice('scripts/'.length)).sort();
-        renderScripts(scriptNames);
-        listStatus.textContent = scriptNames.length ? scriptNames.length + ' scripts available.' : 'No scripts found.';
+        renderPlatform();
       } catch (error) {
         listStatus.textContent = 'Could not refresh scripts. ' + (scriptNames.length ? 'The previous list is still shown. ' : '') +
           'Try Refresh or browse on GitHub. ' + (error.name === 'AbortError' ? 'The request timed out.' : error.message);
@@ -136,6 +203,14 @@
         refreshButton.disabled = false;
       }
     }
+    platformChoice.addEventListener('click', event => {
+      const button = event.target.closest('button[data-platform]');
+      if (!button || !['windows', 'unix'].includes(button.dataset.platform)) return;
+      selectedPlatform = button.dataset.platform;
+      try { localStorage.setItem('simplyhost-script-platform', selectedPlatform); } catch {}
+      renderPlatform();
+    });
+    for (const button of platformChoice.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.platform === selectedPlatform));
     scriptsList.addEventListener('change', updateCommands);
     refreshButton.addEventListener('click', loadScripts);
     copyButton.addEventListener('click', async () => {

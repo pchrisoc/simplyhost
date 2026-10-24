@@ -7,7 +7,34 @@ bash scripts/menu.sh
 bash scripts/doctor.sh
 ```
 
-The scripts are self-contained and support the script site's `curl -fsSL URL | bash` commands. Prompts read from `/dev/tty`, so piping the script does not consume answers. Bash scripts support `--help`; the Windows script supports `-Help`. Interactive choices require a terminal; reports and the backup tools also accept arguments for unattended use.
+The scripts are self-contained and support the script site's `curl -fsSL URL | bash` commands. Prompts read from `/dev/tty`, so piping the script does not consume answers. Bash scripts support `--help`; Windows scripts support `-Help`. Interactive choices require a terminal; reports and the backup tools also accept arguments for unattended use.
+
+## Choose your platform
+
+At [scripts.simplyhost.org](https://scripts.simplyhost.org), use the logo buttons to the right of the title to select **Windows (PowerShell)** or **macOS / Linux (Bash)**. The selected button is highlighted; hover or focus it for the platform label. The site remembers your preference, filters unsupported tools, and generates commands using the script domain. Windows downloads go into the temporary directory and run through PowerShell; they do not require WSL or PowerShell's `curl` alias. Switching platforms immediately updates selected commands. The list still discovers new scripts automatically from GitHub; new `.ps1`/`.bat`/`.cmd` files are Windows-only by default and shell scripts are Unix-only until a native Windows implementation is registered.
+
+| Tools | Windows | macOS / Linux |
+| --- | --- | --- |
+| Neovim | `nvim.ps1`: native Neovim + Git and SimplyHost LazyVim config | `nvim.sh` |
+| Menu, doctor, health, ports, storage, inventory | `windows.ps1 -Tool NAME`, using native Windows commands | Corresponding `.sh`; ports supports `lsof` on macOS and `ss` on Linux |
+| Backup, backup-check | `windows.ps1 -Tool NAME`; requires Python 3.8+ | Corresponding `.sh`; requires Python 3.8+ |
+| New-service, logs, compose-update | `windows.ps1 -Tool NAME`; Docker operations need an existing daemon/Compose v2 | Corresponding `.sh`; Docker operations need an existing daemon/Compose v2 |
+| Terminal setup | `powershell.ps1` | `iterm2.sh` on macOS only |
+| Docker Engine installation | Hidden; install Docker Desktop separately | `docker.sh` on Debian/Ubuntu only |
+| Starter template | `windows.ps1 -Tool template` | `template.sh` |
+
+Windows service logs read Service Control Manager events; systemd logs are Linux-only. `-Follow` applies to Docker logs. The Windows updater preserves resolved configuration and old-image tags, asks separately before pulling and recreating, and writes `rollback.ps1` with the same image/data-migration limitations as the Bash updater. Its snapshots are restricted to the current user.
+
+The native Windows helpers are self-contained downloads. Examples after downloading `windows.ps1`:
+
+```powershell
+.\windows.ps1 -Tool backup -Source C:\Projects -Destination D:\Backups -Keep 7
+.\windows.ps1 -Tool backup-check -Destination D:\Backups -MaxAgeHours 48
+.\windows.ps1 -Tool ports -Port 80,443
+.\windows.ps1 -Tool compose-update -Directory C:\Projects\my-service
+```
+
+Each recurring Windows tool offers to save a `sh-NAME` command in `$PROFILE.CurrentUserAllHosts`, backed by a persistent copy in `%LOCALAPPDATA%\SimplyHost\scripts`. Use `-AddCommand` to request it or `-NoPrompt` to skip optional questions. Profile edits preserve existing content and keep a backup. Arguments use PowerShell's named form, e.g. `sh-backup -Source C:\Projects -Destination D:\Backups`.
 
 ## Available tools
 
@@ -28,7 +55,7 @@ The scripts are self-contained and support the script site's `curl -fsSL URL | b
 | `logs.sh [container NAME \| service UNIT \| compose DIRECTORY] [--follow]` | Last 100 lines; no arguments opens a source menu. |
 | `compose-update.sh [DIRECTORY]` | Saves resolved config and old-image rollback tags, pulls images, then separately confirms recreation with readiness checks. |
 
-`nvim.sh` is the existing Neovim installer. `template.sh` is the starter template.
+`nvim.sh` and `nvim.ps1` install the same SimplyHost Neovim configuration on their respective systems. `template.sh` is the starter template.
 
 ## Repeat commands
 
@@ -46,7 +73,7 @@ Shortcuts rerun the tool, prompting for missing arguments; they do not save answ
 
 ## Requirements and operational limits
 
-Bash 3.2+ and normal Unix tools are required. The installer, ports, and systemd features target Linux. Reports use available platform commands; unavailable optional sections are skipped. Inventory, backups, service creation, and updates require Python 3.8+. Docker tools require access to the Docker daemon; they do not silently escalate socket access or add users to the root-equivalent Docker group. The installer explicitly invokes sudo where necessary.
+Bash 3.2+ and normal Unix tools are required. The Docker Engine installer and systemd features target Linux; ports supports macOS and Linux. Reports use available platform commands; unavailable optional sections are skipped. Inventory, backups, service creation, and updates require Python 3.8+. Docker tools require access to the Docker daemon; they do not silently escalate socket access or add users to the root-equivalent Docker group. The installer explicitly invokes sudo where necessary.
 
 The Docker installation follows [Docker's Debian instructions](https://docs.docker.com/engine/install/debian/) and [Ubuntu instructions](https://docs.docker.com/engine/install/ubuntu/). It preserves conflicting packages and existing repository files for manual review. If a partial installation leaves repository configuration behind, inspect that configuration and finish with apt before retrying.
 

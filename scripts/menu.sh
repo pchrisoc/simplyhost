@@ -101,6 +101,9 @@ while :; do
   [[ "$query" != q ]] || exit 0
   options=(); matching=()
   for index in "${!names[@]}"; do
+    case "$(uname -s):${names[$index]}" in
+      Linux:iterm2|Darwin:docker) continue ;;
+    esac
     entry="${names[$index]} — ${descriptions[$index]}"
     if [[ "$query" == all ]] || printf '%s\n' "$entry" | grep -Fqi -- "$query"; then
       options+=("$entry"); matching+=("${names[$index]}")

@@ -69,7 +69,7 @@ install_lazyvim() (
     cp -R "$staging/simplyhost-main/config/nvim" "$staging/nvim"
   fi
   [[ -f "$staging/nvim/init.lua" && -f "$staging/nvim/lua/config/lazy.lua" ]]
-  for plugin in colorscheme completion dashboard simplyhost-options; do
+  for plugin in colorscheme completion dashboard simplyhost-options markdown-view simplyhost-extras; do
     if [[ ! -f "$staging/nvim/lua/plugins/$plugin.lua" ]]; then
       printf 'Downloaded config is missing %s.lua; existing config was not changed.\n' "$plugin" >&2
       exit 1
@@ -81,7 +81,7 @@ install_lazyvim() (
     grep -q 'LazyVim/LazyVim' "$config_directory/lua/config/lazy.lua"; then
     printf 'Found LazyVim; updating SimplyHost settings and preserving other config files.\n'
     mkdir -p "$config_directory/lua/plugins"
-    for plugin in colorscheme completion dashboard simplyhost-options; do
+    for plugin in colorscheme completion dashboard simplyhost-options markdown-view simplyhost-extras; do
       destination="$config_directory/lua/plugins/$plugin.lua"
       if [[ -f "$destination" ]] && cmp -s "$staging/nvim/lua/plugins/$plugin.lua" "$destination"; then
         printf 'Already up to date: %s\n' "$plugin"

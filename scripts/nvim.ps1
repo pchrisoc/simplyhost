@@ -70,7 +70,7 @@ try {
         Expand-Archive -LiteralPath $zip -DestinationPath $staging
         $configSource = Join-Path $staging 'simplyhost-main\config\nvim'
     }
-    $plugins = @('colorscheme','completion','dashboard','simplyhost-options')
+    $plugins = @('colorscheme','completion','dashboard','simplyhost-options','markdown-view','simplyhost-extras')
     foreach ($required in @('init.lua','lua\config\lazy.lua') + @($plugins | ForEach-Object { 'lua\plugins\' + $_ + '.lua' })) {
         if (-not (Test-Path -LiteralPath (Join-Path $configSource $required))) { throw "Config missing $required; existing config has not been changed." }
     }

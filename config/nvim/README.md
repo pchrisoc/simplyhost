@@ -3,7 +3,11 @@
 Saved from the local LazyVim configuration. Includes the navy, blue, cyan, and
 teal theme, SimplyHost dashboard, completion bindings (Enter for newline,
 Shift+Enter to accept when supported by the terminal), editor options, and
-plugin version lockfile.
+plugin version lockfile. The saved setup includes all 25 selected LazyVim extras
+(18 language entries), including Ansible, CMake, Docker, Git, Go, Java, JSON,
+Markdown, PHP, Python, Rust, SQL, Tailwind, TeX, TOML, TypeScript/VTSLS, and YAML.
+It also includes Yanky, Dial, incremental rename, Neotest, dotfile support,
+mini.hipatterns, and VS Code integration. LazyVim supplies its default plugins.
 
 `scripts/nvim.sh` automatically detects Linux (including WSL) or macOS and installs this directory in
 `${XDG_CONFIG_HOME:-~/.config}/nvim`. The installer checks for an existing Neovim
@@ -19,11 +23,22 @@ restarting the shell. The installer verifies `/usr/local/bin` is on that origina
 PATH and refuses to overwrite an existing file or link.
 
 If LazyVim is already configured, only `colorscheme.lua`, `completion.lua`,
-`dashboard.lua`, and `simplyhost-options.lua` in `lua/plugins` are applied.
+`dashboard.lua`, `simplyhost-options.lua`, `markdown-view.lua`, and
+`simplyhost-extras.lua` in `lua/plugins` are applied.
 Changed files are moved to numbered `.bak` files; identical files are skipped.
 Other configuration files, the existing plugin lockfile, data, state, and cache
 are preserved. SimplyHost editor preferences are applied through a plugin spec
 without replacing the existing `lua/config/options.lua`.
+The saved extras are imported through `simplyhost-extras.lua` on updates, so
+existing installations gain the same plugins and languages without replacing
+their `lazyvim.json` or removing their other selected extras. These imports are
+managed by the SimplyHost plugin file rather than toggled through `:LazyExtras`.
+
+Markdown support is enabled automatically. Headings hide their `#` markers away
+from the cursor line, and bullets and links render in the editor. Markdown
+diagnostics are hidden to keep prose free of lint messages, signs, and underlines;
+diagnostics in other file types are unaffected. Restart Neovim after updating
+to load these settings.
 
 For a fresh install the entire saved config is copied. An existing non-LazyVim
 config is backed up as a directory first. Downloads are staged and validated

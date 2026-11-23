@@ -125,9 +125,20 @@ Run from a local checkout, or download into your temporary directory:
 
 ```powershell
 $installer = Join-Path $env:TEMP 'simplyhost-terminal.ps1'
-Invoke-WebRequest -Uri https://scripts.simplyhost.org/powershell.ps1 -OutFile $installer
-& $installer -AddCommand -NoPrompt
+Invoke-WebRequest -UseBasicParsing -Uri 'https://scripts.simplyhost.org/powershell.ps1' -OutFile $installer
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer -AddCommand -NoPrompt
+if ($LASTEXITCODE -ne 0) { throw "Installer failed with exit code $LASTEXITCODE" }
 ```
+
+The **Scripts** website generates the same process-only bypass when running `.ps1` installers from Windows PowerShell. This works when the default execution policy is `Restricted` without changing machine-wide or current-user policy. If execution is centrally enforced through Group Policy, contact your administrator rather than trying to override it.
+
+**PowerShell profile startup:** The installer also writes to `$PROFILE.CurrentUserAllHosts`. With the default `Restricted` policy, PowerShell will refuse to load that profile even after installation succeeds. If this is your own unmanaged computer and you want the theme and prompt to load automatically in future sessions, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+`RemoteSigned` allows locally authored profiles while requiring an appropriate signature for scripts identified as downloaded from the internet. You can check effective policy with `Get-ExecutionPolicy -List`. This user-level change is optional and separate from the process-scoped installer bypass.
 
 The installer:
 

@@ -143,7 +143,8 @@
       const downloadName = 'simplyhost-' + name.replace(/[^a-zA-Z0-9_-]/g, '-') + '.' + ext;
       if (selectedPlatform === 'windows') {
         const download = "$script = Join-Path $env:TEMP '" + downloadName + "'; Invoke-WebRequest -UseBasicParsing -Uri '" + url + "' -OutFile $script; ";
-        if (['ps1', 'bat', 'cmd'].includes(ext)) return download + '& $script' + choice.arguments;
+        if (ext === 'ps1') return download + '& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script' + choice.arguments + '; if ($LASTEXITCODE -ne 0) { throw "SimplyHost script failed with exit code $LASTEXITCODE" }';
+        if (['bat', 'cmd'].includes(ext)) return download + '& $script' + choice.arguments;
         if (['vbs', 'wsf'].includes(ext)) return download + '& cscript.exe //nologo $script';
         if (windowsRuntimes[ext]) return download + '& ' + windowsRuntimes[ext] + ' $script';
         return '';
